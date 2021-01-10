@@ -1,5 +1,5 @@
 from tkinter import *
-import re
+from pprint import pprint
 
 
 root = Tk()
@@ -27,13 +27,12 @@ iv.trace('w', iv_trace)
 addVar = StringVar()
 addVar.set('something')
 
-mb.menu.add_checkbutton(label="mayo", state='active', variable=iv, command=what) #, value='mayo', variable=addVar)
-#mb.menu.add_checkbutton(label="ketchup", value='ketchup', variable=addVar)
+mb.menu.add_checkbutton(label="mayo", state='active', variable=iv, command=what)  # , value='mayo', variable=addVar)
+# mb.menu.add_checkbutton(label="ketchup", value='ketchup', variable=addVar)
 
 mb.pack()
-from pprint import pprint
 pprint(mb.menu.entryconfigure(0))
-print(mb.menu.entrycget(0,'indicatoron'))
+print(mb.menu.entrycget(0, 'indicatoron'))
 
 
 Button(top, textvariable=addVar).pack()
@@ -49,6 +48,7 @@ def callback(evname):
     def actual_func(ev):
         print('cb for %s: %s  .widget: %s' % (evname, ev, ev.widget))
     return actual_func
+
 
 top.pack()
 top.mainloop()

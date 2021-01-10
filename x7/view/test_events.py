@@ -110,7 +110,7 @@ def bindall(root):
         Create
         Leave
         Visibility
-        Deactivate    
+        Deactivate
     """
     all_events = ['<%s>' % ev for ev in ALL.strip().replace('\n', ',').replace(' ', '').split(',')]
     from_source = set(all_events)

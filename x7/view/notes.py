@@ -10,24 +10,24 @@ need curve edit done command
 
 
 undo/redo:
-	define Command() pattern
-	and CommandStack()
+    define Command() pattern
+    and CommandStack()
 """
 
 
 class Mode(object):
-	name = 'name of mode'
-	tag = 'select'  # action tag from mode buttons
-	item = object  # item actively being edited, etc.
+    name = 'name of mode'
+    tag = 'select'  # action tag from mode buttons
+    item = object  # item actively being edited, etc.
 
-	def event_click(self, event):
-		"""mouse1 click"""
+    def event_click(self, event):
+        """mouse1 click"""
 
-	def event_click2(self, event):
-		"""mouse2 click"""
+    def event_click2(self, event):
+        """mouse2 click"""
 
-	def event_esc(self, event):
-		"""escape key-abort work"""
+    def event_esc(self, event):
+        """escape key-abort work"""
 
-	def deactivate(self):
-		"""stop and save work"""
+    def deactivate(self):
+        """stop and save work"""
