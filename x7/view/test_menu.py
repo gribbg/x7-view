@@ -1,5 +1,6 @@
 from tkinter import *
 from pprint import pprint
+import time
 
 
 root = Tk()
@@ -42,6 +43,29 @@ Label(top, text='').pack()
 Label(top, text='').pack()
 Label(top, text='').pack()
 Label(top, text=' '*80).pack()
+
+
+def popped(thing):
+    print('%.4f: popped: %s' % (time.time() % 10, thing))
+
+
+def popup(ev):
+    print('%.4f: Popup: %s' % (time.time() % 10, ev))
+    menu = Menu(top, tearoff=0)
+    menu.add_command(label="Thing1", command=lambda: popped('thing1'))
+    menu.add_command(label="Thing2", command=lambda: popped('thing2'))
+    print('%.4f: Pre-post' % (time.time() % 10))
+    menu.post(ev.x_root, ev.y_root)
+    print('%.4f: Post-post' % (time.time() % 10))
+
+
+top.bind('<Button-3>', popup)
+
+# Sample output on Windows:
+# 2.6393: Popup: <ButtonPress event state=Mod1 num=3 x=254 y=161>
+# 2.6393: Pre-post
+# 4.2658: Post-post
+# 4.2658: popped: thing2
 
 
 def callback(evname):
