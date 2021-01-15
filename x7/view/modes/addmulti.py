@@ -85,6 +85,7 @@ class ModeAddMultiClick(ModeAdd):
         else:
             curve = self.multi_begin(event.mp)
             self.controller.view.undo_begin(CommandShapeAdd(self.controller.view, curve))
+            self.controller.view.status_set('Click-drag to set curvature. Mouse-2 or Enter to accept.  ESC to abort')
             self.active_item = curve
         if self.active_item:
             self.active_item.update()
