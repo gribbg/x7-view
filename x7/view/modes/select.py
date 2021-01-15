@@ -141,6 +141,104 @@ class AbortMouseEater(object):
         pass
 
 
+class ModeSelectContextMenu:
+    def __init__(self, mode: 'ModeSelect'):
+        self.mode = mode
+        self.active_item = mode.active_item
+        self.active_tag = mode.active_tag
+
+    def menu_select(self):
+        self.mode.controller.view.select(self.active_item, add=True)
+
+    def menu_deselect(self):
+        self.mode.controller.view.select_deselect(self.active_item)
+
+    def menu_edit_points(self):
+        self.mode.controller.view.select_none()
+        if not isinstance(self.active_item, DigitizeShape):
+            return
+        self.mode.controller.view.select(self.active_item)
+        self.active_item.edit_handle_show()
+
+    def menu_edit_details(self):
+        self.mode.controller.view.select_none()
+        if not isinstance(self.active_item, DigitizeShape):
+            return
+        self.mode.controller.view.select(self.active_item)
+        DetailDialog(self.mode.controller.view, self.active_item)
+
+    def menu_dump_data(self):
+        # TODO-scale digits based on total model extents?
+        if not isinstance(self.active_item, DigitizeShape):
+            return
+        dc = DumpContext()
+        for shape in self.mode.controller.view.selection:
+            shape.elem.dump(dc)
+        print(dc.output(just_lines=True))
+
+    def menu_dump_as_curves(self):
+        if not isinstance(self.active_item, DigitizeShape):
+            return
+        dc = DumpContext()
+        for c in self.active_item.as_curves():
+            c.elem.dump(dc)
+        print(dc.output())
+
+    def menu_explode(self):
+        if not isinstance(self.active_item, DigitizeShape):
+            return
+        curves = self.active_item.as_curves()
+        command = CommandShapeExplode(self.mode.controller.view, self.active_item, curves)
+        self.mode.controller.view.undo_begin_commit(command)
+
+    def menu_group(self):
+        """Group selected items"""
+        view = self.mode.controller.view
+        elems = [shape.elem for shape in view.selection]
+        if not elems:
+            raise DigitizeInternalError('Empty group/selection?')
+        Group.RAISE_ON_EMPTY = True
+        elem = Group('group#1', PenBrush('default'), elems=elems, fix_names=True)
+        group = DigitizeGroup(view, elem)
+        command = CommandShapeReplace(view, view.selection, [group])
+        view.undo_begin_commit(command)
+
+    def menu_ungroup(self):
+        selection = self.mode.controller.view.selection
+        shapes = []
+        for shape in selection:
+            for elem in shape.elem.iter_elems_transformed():
+                shapes.append(digi_shape_from_elem(elem, self.mode.controller.view))
+        if shapes:
+            command = CommandShapeReplace(self.mode.controller.view, selection, shapes)
+            self.mode.controller.view.undo_begin_commit(command)
+
+    def popup(self, event):
+        # print('dcp.m2: event=%s .cx=%s .cy=%s .tag=%s' % (event, event.cx, event.cy, event.tag))
+        menu = tk.Menu(self.mode.controller.master, tearoff=0)
+        menu.add_command(label="Select", command=self.menu_select)
+        menu.add_command(label="Deselect", command=self.menu_deselect)
+        menu.add_separator()
+        menu.add_command(label='Edit Points', command=self.menu_edit_points)
+        menu.add_command(label='Edit Details', command=self.menu_edit_details)
+        menu.add_command(label='Explode', command=self.menu_explode)
+
+        selection = self.mode.controller.view.selection
+        group = bool(len(selection) > 1)
+        ungroup = bool(len(selection) == 1 and isinstance(selection[0], DigitizeGroup))
+        state_map = ['disabled', 'normal']
+        menu.add_command(label='Group', command=self.menu_group, state=state_map[group])
+        menu.add_command(label='Ungroup', command=self.menu_ungroup, state=state_map[ungroup])
+        if len(selection) == 1:
+            selection[0].context_extra(menu)
+
+        menu.add_separator()
+        menu.add_command(label='Dump Data', command=self.menu_dump_data)
+        menu.add_command(label='Dump Curves', command=self.menu_dump_as_curves)
+
+        menu.tk_popup(event.x_root, event.y_root)
+
+
 class ModeSelect(ModeCommon):
     """Selection mode: select & drag objects.  Right-click goes to main or selected object"""
     MODE_TAG = 'Select'
@@ -278,93 +376,7 @@ class ModeSelect(ModeCommon):
             cmd = CommandShapeAdd(self.controller.view, to_paste)
             self.controller.view.undo_begin_commit(cmd)
 
-    def menu_select(self):
-        self.controller.view.select(self.active_item, add=True)
-
-    def menu_deselect(self):
-        self.controller.view.select_deselect(self.active_item)
-
-    def menu_edit_points(self):
-        self.controller.view.select_none()
-        if not isinstance(self.active_item, DigitizeShape):
-            return
-        self.controller.view.select(self.active_item)
-        self.active_item.edit_handle_show()
-
-    def menu_edit_details(self):
-        self.controller.view.select_none()
-        if not isinstance(self.active_item, DigitizeShape):
-            return
-        self.controller.view.select(self.active_item)
-        DetailDialog(self.controller.view, self.active_item)
-
-    def menu_dump_data(self):
-        # TODO-scale digits based on total model extents?
-        if not isinstance(self.active_item, DigitizeShape):
-            return
-        dc = DumpContext()
-        for shape in self.controller.view.selection:
-            shape.elem.dump(dc)
-        print(dc.output(just_lines=True))
-
-    def menu_dump_as_curves(self):
-        if not isinstance(self.active_item, DigitizeShape):
-            return
-        dc = DumpContext()
-        for c in self.active_item.as_curves():
-            c.elem.dump(dc)
-        print(dc.output())
-
-    def menu_explode(self):
-        if not isinstance(self.active_item, DigitizeShape):
-            return
-        curves = self.active_item.as_curves()
-        command = CommandShapeExplode(self.controller.view, self.active_item, curves)
-        self.controller.view.undo_begin_commit(command)
-
-    def menu_group(self):
-        """Group selected items"""
-        view = self.controller.view
-        elems = [shape.elem for shape in view.selection]
-        if not elems:
-            raise DigitizeInternalError('Empty group/selection?')
-        Group.RAISE_ON_EMPTY = True
-        elem = Group('group#1', PenBrush('default'), elems=elems, fix_names=True)
-        group = DigitizeGroup(view, elem)
-        command = CommandShapeReplace(view, view.selection, [group])
-        view.undo_begin_commit(command)
-
-    def menu_ungroup(self):
-        selection = self.controller.view.selection
-        shapes = []
-        for shape in selection:
-            for elem in shape.elem.iter_elems_transformed():
-                shapes.append(digi_shape_from_elem(elem, self.controller.view))
-        if shapes:
-            command = CommandShapeReplace(self.controller.view, selection, shapes)
-            self.controller.view.undo_begin_commit(command)
-
     def context_menu(self, event):
         # print('dcp.m2: event=%s .cx=%s .cy=%s .tag=%s' % (event, event.cx, event.cy, event.tag))
-        menu = tk.Menu(self.controller.master, tearoff=0)
-        menu.add_command(label="Select", command=self.menu_select)
-        menu.add_command(label="Deselect", command=self.menu_deselect)
-        menu.add_separator()
-        menu.add_command(label='Edit Points', command=self.menu_edit_points)
-        menu.add_command(label='Edit Details', command=self.menu_edit_details)
-        menu.add_command(label='Explode', command=self.menu_explode)
-
-        selection = self.controller.view.selection
-        group = bool(len(selection) > 1)
-        ungroup = bool(len(selection) == 1 and isinstance(selection[0], DigitizeGroup))
-        state_map = ['disabled', 'normal']
-        menu.add_command(label='Group', command=self.menu_group, state=state_map[group])
-        menu.add_command(label='Ungroup', command=self.menu_ungroup, state=state_map[ungroup])
-        if len(selection) == 1:
-            selection[0].context_extra(menu)
-
-        menu.add_separator()
-        menu.add_command(label='Dump Data', command=self.menu_dump_data)
-        menu.add_command(label='Dump Curves', command=self.menu_dump_as_curves)
-
-        menu.post(event.x_root, event.y_root)
+        menu = ModeSelectContextMenu(self)
+        menu.popup(event)

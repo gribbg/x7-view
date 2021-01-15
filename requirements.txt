@@ -1,2 +1,3 @@
 x7-lib
 x7-geom
+screeninfo

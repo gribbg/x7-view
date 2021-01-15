@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import simpledialog
 
 from .digiview import DigitizeView
+from .platform import PCFG
 from .shapes import DigitizeShape
 from .shapes.shape_su import CommandSimpleUndo
 from x7.geom.typing import *
@@ -42,7 +43,7 @@ class Detail(object):
 
         validation = self.validate()
         if validation is True:
-            self.entry.configure(background='systemWindowBody')
+            self.entry.configure(background=PCFG.window_body)
         else:
             old = self.entry.configure()
             print('Going red, old was', old['background'])

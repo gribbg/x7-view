@@ -1,10 +1,11 @@
 """
 Main digitize controller.  All callbacks flow through here
 """
-
+import re
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
+import screeninfo
 
 from x7.geom.colors import PenBrush
 from x7.geom.drawing import DrawingContext
@@ -351,6 +352,25 @@ class DigitizeController(object):
         print(dc.output())
 
 
+def screen_size() -> Tuple[int, int, int, int]:
+    """
+        Get the size of the current screen.
+
+        :return: (width, height, left, top)
+    """
+    # https://stackoverflow.com/questions/3129322/how-do-i-get-monitor-resolution-in-python/56913005#56913005
+    # ISSUE: This causes a window to popup and the next root window is behind all others
+
+    root = tk.Tk()
+    root.update_idletasks()
+    root.attributes('-fullscreen', True)
+    root.state('iconic')
+    geometry = root.winfo_geometry()
+    root.destroy()
+    w, h, l, t = map(int, re.split(r'[+x]', geometry))
+    return w, h, l, t
+
+
 def test_digi():
     from PIL import Image
     from x7.geom.drawing import DrawingContext
@@ -358,10 +378,16 @@ def test_digi():
     from x7.geom.model import gen_test_model
 
     #  image = Image.open('/tmp/parrot.jpg')
-    # image = Image.new('RGBA', (400, 1200), 'lightgrey')
-    image = Image.new('RGBA', (1200, 1200), 'lightgrey')
+    m = screeninfo.get_monitors()[0]
+    w, h, l, t = m.width, m.height, m.x, m.y
+    # w, h, l, t = screen_size()
+    w = w * 3 // 4
+    h = h * 3 // 4
+    w, h = 600, 200
+    image = Image.new('RGBA', (w, h), 'lightgrey')
     # TODO - add grid over blank image
-    mat = Transform.canvas_fit(canvas_size=image.size, zoom=5, zero_zero=(200, 600))
+    # TODO - eliminate default background image
+    mat = Transform.canvas_fit(canvas_size=image.size, zoom=5, zero_zero=(w//2, h//2))
     draw = DrawingContext(image, mat)
 
     show_model = False

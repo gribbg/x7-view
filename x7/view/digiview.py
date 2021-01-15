@@ -277,7 +277,7 @@ class DigitizeView(DigiDraw):
         self.canvas.bind('<Button-1>', self.mouse_button1)
         self.canvas.bind('<B1-Motion>', self.mouse_button1_motion)
         self.canvas.bind('<ButtonRelease-1>', self.mouse_button1_release)
-        self.canvas.bind('<Button-2>', self.mouse_button2)
+        self.canvas.bind('<<ContextMenu>>', self.mouse_button2)
         self.frame.bind('<<SelectAll>>', lambda e: self.select_all())
         self.frame.bind('<<SelectNone>>', lambda e: self.select_none())
         self.frame.bind('<<NextWindow>>', self.select_next)
@@ -368,12 +368,12 @@ class DigitizeView(DigiDraw):
 
             debug = False
             if debug:
-                def showbb(tag, bb: BBox):
+                def show_bbox(tag, bb: BBox):
                     bb = round(bb, 2)
                     print('%s %-18s %-18s:%-18s %s' % (tag, bb.size(), bb.p1, bb.p2, bb.center))
 
-                showbb(' window: ', window_bb)
-                showbb(' model:  ', fit_bb)
+                show_bbox(' window: ', window_bb)
+                show_bbox(' model:  ', fit_bb)
                 print(' now: ', self.draw.matrix)
 
             self.zoom = self.draw.matrix.scale_vals()[0] / self.base_transform.scale_vals()[0]
@@ -496,6 +496,7 @@ class DigitizeView(DigiDraw):
         # TODO - self.mode.refresh()
 
     def mode_reset(self):
+        self.status_clear()
         self.mode_set(self.mode_base)
 
     def mode_set(self, mode: Mode):
