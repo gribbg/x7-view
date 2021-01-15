@@ -1,5 +1,6 @@
 from tkinter import *
 import re
+import time
 
 
 root = Tk()
@@ -140,6 +141,22 @@ def bindall(root):
         except Exception as err:
             print('Error on mb.bind(%s): %s' % (ev, err))
 
+
+def popup(ev):
+    def popped(thing):
+        print('%.4f: popped: %s' % (time.time() % 10, thing))
+
+    print('%.4f: Popup: %s' % (time.time() % 10, ev))
+    menu = Menu(top, tearoff=0)
+    menu.add_command(label="Thing1", command=lambda: popped('thing1'))
+    menu.add_command(label="Thing2", command=lambda: popped('thing2'))
+    print('%.4f: Pre-post' % (time.time() % 10))
+    menu.post(ev.x_root, ev.y_root)
+    print('%.4f: Post-post' % (time.time() % 10))
+
+
+top.bind('<Button-3>', popup)
+top.bind('<<ContextMenu>>', popup)
 
 print(root.bind_all())
 print(root.bind_class('Menubutton'))
