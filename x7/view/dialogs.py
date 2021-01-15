@@ -3,9 +3,11 @@
 """
 import os
 import tkinter as tk
+from tkinter import ttk
 from tkinter import simpledialog
 
 from x7.geom.typing import *
+from x7.view.widgets import ValidatingEntry
 
 
 def file_save_as(self):
@@ -36,44 +38,38 @@ class FileDialog(simpledialog.Dialog):
     def __init__(self, parent, title=None, initial_dir=None, initial_file=None):
         self.initial_dir = initial_dir or '/tmp'
         self.initial_file = initial_file or 'foo.txt'
-        self.path_var = None
-        self.path = None
-        self.entry_var = None
-        self.entry = None
+        self.path: Optional[ttk.Entry] = None
+        self.entry: Optional[ttk.Entry] = None
         self.text: Optional[tk.Text] = None
         self.result = None
         super().__init__(parent, title)
 
-    def body(self, master):
-        frame = tk.Frame(master)
+    def body(self, master: tk.Widget):
+        master.pack(expand=1, fill=tk.BOTH)
+        frame = master
+        frame.grid_columnconfigure(1, weight=2)
 
-        label = tk.Label(frame, text='Dir:', justify=tk.LEFT)
-        label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.W)
-        path_var = tk.StringVar(frame, value=str(self.initial_dir))
-        path_var.trace('w', self.path_changed)
-        self.path_var = path_var
-        path = tk.Entry(frame, textvariable=path_var, width=80)
-        path.grid(row=0, column=1, padx=5, sticky=tk.W+tk.E)
-        self.path = path
+        def val_path(_ve, new_path):
+            if not os.path.isdir(new_path) or new_path.strip() != new_path:
+                self.text_update('')
+                return False
+            try:
+                entries = [e+('/' if os.path.isdir(new_path+'/'+e) else '') for e in os.listdir(new_path)]
+            except OSError as err:
+                self.text_update('')
+                return str(err)
+            self.text_update('\n'.join(sorted(entries)))
+            return True
 
-        label = tk.Label(frame, text='File:', justify=tk.LEFT)
-        entry_var = tk.StringVar(frame, value=str(self.initial_file))
-        entry_var.trace('w', self.do_validate)
-        self.entry_var = entry_var
-        entry = tk.Entry(frame, textvariable=entry_var, width=80)
-        label.grid(row=1, column=0, padx=5, pady=5, sticky=tk.W)
-        entry.grid(row=1, column=1, padx=5, sticky=tk.W+tk.E)
-        self.entry = entry
-        frame.pack()
+        # Note: must create self.text before self.path due to validation
+        self.text = tk.Text(frame)
+        self.text.grid(row=2, column=0, columnspan=2, sticky='news')
+        self.text.configure(state=tk.DISABLED)
 
-        text = tk.Text(frame)
-        text.grid(row=2, column=0, columnspan=2, padx=5, pady=5, sticky=tk.W+tk.E+tk.S+tk.N)
-        text.configure(state=tk.DISABLED)
-        self.text = text
+        self.path = ValidatingEntry(frame, label='Dir:', value=str(self.initial_dir), validator=val_path, row=0, col=0)
+        self.entry = ValidatingEntry(frame, label='File:', value=str(self.initial_file), row=1, col=0)
 
-        self.path_changed()
-
-        return self.entry
+        return self.entry.entry_field
 
     def text_update(self, new_text):
         text = self.text
@@ -82,26 +78,28 @@ class FileDialog(simpledialog.Dialog):
         text.insert(1.0, new_text)
         text.configure(state=tk.DISABLED)
 
-    def path_changed(self, name=None, index=None, mode=None):
-        unused(name, index, mode)
-        new_path = self.path_var.get()
-        print('path_changed: new=', new_path)
-        if os.path.isdir(new_path):
-            # header = new_path.center(80)+'\n'
-            self.path.configure(background='systemWindowBody')
-            entries = [e+('/' if os.path.isdir(new_path+'/'+e) else '') for e in os.listdir(new_path)]
-            self.text_update('\n'.join(sorted(entries)))
-        else:
-            self.path.configure(background='#FF8080')
-
     def do_validate(self, name=None, index=None, mode=None):
         unused(self, name, index, mode)
         pass
 
     def apply(self):
-        self.result = self.path_var.get() + '/' + self.entry_var.get()
+        # self.result = self.path_var.get() + '/' + self.entry_var.get()
+        self.result = self.path.get() + '/' + self.entry.get()
+
+
+def test_dialogs():
+    from . import style
+
+    root = tk.Tk()
+    style.setup_style()
+
+    def cb():
+        fd = FileDialog(root, title='Open file')
+        print('After: result is %r' % fd.result)
+
+    root.after(100, cb)
+    root.mainloop()
 
 
 if __name__ == '__main__':
-    d = FileDialog(tk.Tk(), title='Open file')
-    d.mainloop()
+    test_dialogs()

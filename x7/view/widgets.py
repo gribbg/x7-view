@@ -3,7 +3,7 @@ from tkinter import ttk
 from x7.geom.typing import *
 
 
-__all__ = ['ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar']
+__all__ = ['ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar', 'ValidatingEntry']
 
 
 class ButtonBar(tk.Frame):
@@ -99,6 +99,121 @@ class StatusBar(tk.Frame):
         self.label.update_idletasks()
 
 
+# TODO-this does not seem to be needed
+class ValidationBorder(ttk.Frame):
+    """
+        A frame/border around a widget that turns red when invalid.
+
+        Expects style.style_setup() to have been called to define ValidationBorder style
+    """
+
+    def __init__(self, master=None, padding=1, style='ValidationBorder', **kw):
+        super().__init__(master, padding=padding, style=style, **kw)
+
+    def state(self, statespec=None):
+        # TODO-Not sure we need to do this
+        if statespec is not None:
+            # Pass the state onto the children
+            for child in self.children.values():
+                child.state(statespec)
+        return super().state(statespec)
+
+
+class ValidatingEntry:
+    """
+        ttk.Entry with optional validation and label
+
+        Not actually a widget, just a composite object with .label, .entry, .entry_field, and .entry_var.
+        Expects style.style_setup() to have been called to define ValidationBorder style
+
+        Fields (.label and .entry are the fields to grid/pack if external layout is required):
+
+            * label - the ttk.Label or None if label text was not passed in
+            * entry - the border Frame around Entry & message
+            * entry_field - the actual Entry field
+            * entry_var - the variable bound to the Entry field (use ValidatingEntry.get() to access)
+            * message - the validation message (automatically managed by class using result of validator)
+    """
+
+    def __init__(self, frame, *, label=None, value='',
+                 validator: Optional[Callable[['ValidatingEntry', str], Union[str, bool]]] = None,
+                 row=None, col=None, width=80, read_only=False):
+        """
+
+        :param frame:       Containing widget
+        :param label:       Optional text for a label to be displayed to the left entry field
+        :param value:       Optional starting value
+        :param validator:   Optional validation function, called with ValidatingEntry and current field value
+        :param row:         Optional row.  If row & col are set, then .grid() is called. Label goes at col, entry at col+1
+        :param col:         Optional column.
+        :param width:       Width of Entry field
+        :param read_only:   True to make Entry field read-only.
+        """
+        self.frame = frame
+        self.validator = validator or (lambda ev, s: True)
+        self.label = ttk.Label(frame, text=label, justify=tk.LEFT) if label else None
+        self.entry_var = tk.StringVar(frame, value=str(value))
+        self.entry = ttk.Frame(frame, style='ValidationBorder')
+        self.entry.grid_columnconfigure(0, weight=1)
+        self.entry_field = ttk.Entry(self.entry, textvariable=self.entry_var, width=width)
+        self.entry_field.grid(row=0, column=0, padx=1, pady=1, sticky='we')
+        self.message = ttk.Label(self.entry, text='nothing', foreground='red')
+        self.message.grid(row=1, column=0, sticky='we')
+        self.message.grid_remove()
+        if read_only:
+            self.entry_field.state(('readonly',))
+        if validator:
+            self.entry_var.trace('w', self.validate)
+            self.entry_field.bind('<FocusIn>', self.validate)
+            self.entry_field.bind('<FocusOut>', self.validate)
+            self.validate()
+        if row is not None and col is not None:
+            if label:
+                self.label.grid(row=row, column=col, sticky='w')
+                self.entry.grid(row=row, column=col + 1, sticky='we')
+            else:
+                self.entry.grid(row=row, column=col, sticky='we')
+
+    def validate(self, *_args):
+        result = self.validator(self, self.entry_var.get())
+        if result is True:
+            state = ('!invalid',)
+            self.message.grid_remove()
+        elif result is False:
+            state = ('invalid',)
+            self.message.grid_remove()
+        else:
+            state = ('invalid',)
+            self.message.configure(text=str(result))
+            self.message.grid()
+        self.entry.state(state)
+        self.entry_field.state(state)
+
+    def get(self):
+        return self.entry_var.get()
+
+
+def test_entry_v():
+    from . import style
+
+    def validator(_entry: ValidatingEntry, s: str):
+        if 'invalid' in s:
+            if 'message' in s:
+                return 'Invalid entry because "invalid" is in entry'
+            else:
+                return False
+        return True
+
+    root = tk.Tk()
+    style.setup_style()
+    ValidatingEntry(root, label='Ev1', value='Ev1 is valid', validator=validator, row=0, col=0)
+    ValidatingEntry(root, label='Ev2', value='Ev2 is invalid with message', validator=validator, row=1, col=0)
+    ValidatingEntry(root, label='Ev3', value='Ev3 is read_only', validator=validator, row=2, col=0, read_only=True)
+    ValidatingEntry(root, label='Ev4', value='Ev4 is read_only and invalid', validator=validator, row=3, col=0, read_only=True)
+    root.mainloop()
+    exit(0)
+
+
 def test_scrollbars():
     root = tk.Tk()
     frame = tk.Frame(root, bd=2, relief=tk.SUNKEN)
@@ -121,9 +236,9 @@ def test_scrollbars():
 
     frame.pack(fill="both", expand=True)
     frame.mainloop()
-    import sys
-    sys.exit(0)
+    exit(0)
 
 
 if __name__ == '__main__':
-    test_scrollbars()
+    test_entry_v()
+    # test_scrollbars()
