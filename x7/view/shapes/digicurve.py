@@ -22,6 +22,7 @@ class EditHandleControlPoint(EditHandle):
 
     def __init__(self, shape: 'DigitizeCurve', cp: ControlPoint):
         super().__init__(shape)
+        self.shape = shape      # type fix
         self.cp = cp
         self.tk_ids = []
         self.l1 = self.shape_line(fill='grey')
@@ -271,6 +272,7 @@ class EditHandleOffset(EditHandleDisplayOnly):
 
     def __init__(self, shape: 'DigitizeCurve'):
         super().__init__(shape)
+        self.shape = shape      # type fix
         self.poly = self.shape_poly('green')
         self.offset = 5
 
@@ -285,6 +287,7 @@ class EditHandleOffset(EditHandleDisplayOnly):
 class DigitizeCurve(DigitizeShape):
     def __init__(self, dd: Optional[DigiDraw], curve: ElemCurve):
         super().__init__(dd, curve)
+        self.elem = curve       # type fix
         self.need_edit_handle_refresh = False
 
     def details(self) -> list:
