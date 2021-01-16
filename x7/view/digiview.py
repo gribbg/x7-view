@@ -1,6 +1,7 @@
 """View class for editor"""
 
 import tkinter as tk
+from tkinter import ttk
 from abc import ABC
 
 from PIL import Image, ImageTk, ImageOps
@@ -129,6 +130,7 @@ class DigitizeView(DigiDraw):
         self.callbacks = menu_callbacks
         self.mode_base = base_mode
         self.mode = base_mode
+        self.mode_var = tk.StringVar(self.master)
         self.mode_buttons = []
         self.old_mode_stack = []
         self.selection: List[DigitizeShape] = []
@@ -223,36 +225,38 @@ class DigitizeView(DigiDraw):
         unused(self)
         return [CanvasScrolled(master), StatusBar(master)]
 
-    def make_buttons(self, master):
+    def make_buttons(self, master: tk.Widget):
         """Return list of command buttons for the button bar"""
 
         binder = self.callbacks.binder
 
-        select_button = tk.Radiobutton(
-            master, text='Select', value='Select', indicatoron=False, command=binder('mode_select'))
-        select_button.mode_tag = 'Select'
         shapes = sorted(self.callbacks.shape_map.keys())
         shapes_max_len = max(map(len, shapes))
-        add_button = tk.Radiobutton(master, width=shapes_max_len, indicatoron=False, command=binder('mode_add'))
-        add_button.configure(textvariable=self.callbacks.shape_var)
-        add_button.mode_tag = 'Add'
-        add_menu = tk.Menubutton(master, text='?')
+        add_menu = ttk.Menubutton(master, text='?', style='Toolbutton')
         add_menu.menu = tk.Menu(add_menu, tearoff=0)
         add_menu["menu"] = add_menu.menu
         for val in shapes:
             add_menu.menu.add_radiobutton(
                 label=val, value=val, variable=self.callbacks.shape_var, command=binder('mode_add'))
 
+        select_button = RadioToolbutton(master, mode_tag='Select', value='Select',
+                                        text='Select',
+                                        variable=self.mode_var, command=binder('mode_select'))
+        add_button = RadioToolbutton(master, mode_tag='Add', value='Add',
+                                     textvariable=self.callbacks.shape_var, width=shapes_max_len,
+                                     variable=self.mode_var, command=binder('mode_add'))
+        master.after(10, add_button.invoke)
+
         self.mode_buttons = [select_button, add_button]
+
         return [
-            tk.Button(master, text='Undo', command=binder('edit_undo')),     # TODO - indicate if undo/redo is available
-            tk.Button(master, text='Redo', command=binder('edit_redo')),
-            tk.Button(master, text='Show', command=binder('edit_undo_show')),
+            ttk.Button(master, text='Undo', style='Toolbutton', command=binder('edit_undo')),     # TODO - indicate if undo/redo is available
+            ttk.Button(master, text='Redo', style='Toolbutton', command=binder('edit_redo')),
+            ttk.Button(master, text='Show', style='Toolbutton', command=binder('edit_undo_show')),
             select_button,
             add_button,
             add_menu,
-            # radio_button('Add', binder('mode_add')),
-            tk.Button(master, text='ZFit', command=binder('zoom_fit')),
+            ttk.Button(master, text='ZFit', style='Toolbutton', command=binder('zoom_fit')),
         ]
 
     def bind_events(self):

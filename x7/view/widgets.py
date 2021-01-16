@@ -3,10 +3,26 @@ from tkinter import ttk
 from x7.geom.typing import *
 from x7.view.platform import PCFG
 
-__all__ = ['ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar', 'ValidatingEntry']
+__all__ = [
+    'RadioToolbutton',
+    'ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar', 'ValidatingEntry']
 
 
-class ButtonBar(tk.Frame):
+class RadioToolbutton(ttk.Radiobutton):
+    """A ttk.Radiobutton in the Toolbutton style with .mode_tag and .select()/.deselect()"""
+
+    def __init__(self, master, mode_tag=None, **kwargs):
+        super().__init__(master, style='Toolbutton', **kwargs)
+        self.mode_tag = mode_tag
+
+    def select(self):
+        self.state(('selected', ))
+
+    def deselect(self):
+        self.state(('!selected', ))
+
+
+class ButtonBar(ttk.Frame):
     """A row of buttons"""
 
     def __init__(self, master, buttons):
