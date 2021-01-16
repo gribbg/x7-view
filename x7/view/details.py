@@ -3,13 +3,14 @@
 """
 
 import tkinter as tk
-from tkinter import simpledialog
+from tkinter import ttk, simpledialog
 
+from x7.geom.typing import *
 from .digiview import DigitizeView
 from .platform import PCFG
 from .shapes import DigitizeShape
 from .shapes.shape_su import CommandSimpleUndo
-from x7.geom.typing import *
+from .widgets import ValidatingEntry
 
 
 __all__ = ['Detail', 'DetailFloat', 'DetailPoint', 'DetailDialog']
@@ -22,43 +23,25 @@ class Detail(object):
         self.target = target
         self.attr = attr
         self.ro = ro or value is not None
-        self.entry = None
-        self.entry_var = None
-        self.label = None
+        self.ve: Optional[ValidatingEntry] = None
         self.orig_value = value if value is not None else getattr(target, attr)
 
     def elems(self, frame) -> tuple:        # label, entry field(s)
-        self.label = tk.Label(frame, text=self.attr, justify=tk.LEFT)
-        entry_var = tk.StringVar(frame, value=str(self.orig_value))
-        entry_var.trace('w', self.do_validate)
-        self.entry_var = entry_var
-        self.entry = tk.Entry(frame, textvariable=entry_var, width=80)
-        if self.ro:
-            self.entry.configure(state='disabled')
-        return self.label, self.entry
+        self.ve = ValidatingEntry(frame, label=self.attr, value=str(self.orig_value), validator=self.validate, read_only=self.ro)
+        return self.ve.label, self.ve.entry
 
-    def do_validate(self, name=None, index=None, mode=None):
-        unused(name, index, mode)
-        # print('do_validate(%s, %s, %s) -> %r' % (name, index, mode, self.entry.get()))
-
-        validation = self.validate()
-        if validation is True:
-            self.entry.configure(background=PCFG.window_body)
-        else:
-            old = self.entry.configure()
-            print('Going red, old was', old['background'])
-            self.entry.configure(background='#FF8080')
-
-    def validate(self):
+    def validate(self, ve: ValidatingEntry, value: Any):
         """Return True if this entry is valid, error string otherwise"""
-        if self.ro or self.entry.get() != 'ERROR':
+        if self.ro or value != 'ERROR':
             return True
         return "Error here"
 
     def update(self):
         if not self.ro:
-            print('update %s -> %s' % (self.attr, self.entry.get()))
-            setattr(self.target, self.attr, self.entry.get())
+            cur_val = getattr(self.target, self.attr)
+            new_val = self.ve.get()
+            print('update %s -> %s %s' % (self.attr, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
+            setattr(self.target, self.attr, new_val)
 
 
 class DetailPoint(Detail):
@@ -86,27 +69,48 @@ class DetailDialog(simpledialog.Dialog):
         self.undo_state = 'begin'
         super().__init__(dv.frame, 'Edit Details')
 
-    def body(self, master):
+    def buttonbox(self):
+        """Add standard button box using ttk elements"""
+
+        box = ttk.Frame(self)
+
+        w = ttk.Button(box, text="OK", command=self.ok, default=tk.ACTIVE)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
+        w = ttk.Button(box, text="Cancel", command=self.cancel)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        box.pack()
+
+    def body(self, master: tk.Frame):
+        master.pack(expand=1, fill=tk.BOTH)
+        master.configure(background=PCFG.frame_background)
+        master.master.configure(background=PCFG.frame_background)
+        frame = ttk.Frame(master)
+        frame.pack(expand=1, fill=tk.BOTH)
+
         for row, detail in enumerate(self.details):
             if detail:
-                label, entry = detail.elems(master)
+                label, entry = detail.elems(frame)
                 label.grid(row=row, column=0, padx=5, pady=5, sticky=tk.W)
                 entry.grid(row=row, column=1, padx=5, sticky=tk.W+tk.E)
             else:
-                label = tk.Label(master, justify=tk.LEFT)
-                label.grid(row=row, column=0, columnspan=2, padx=5, pady=5, sticky=tk.W)
+                sep = ttk.Separator(frame)
+                sep.grid(row=row, column=0, columnspan=2, padx=5, pady=5, sticky='we')
 
         for dt in self.details:
             if not dt.ro:
-                return dt.entry
-        return self.details[0].entry
+                return dt.ve.entry
+        return self.details[0].ve.entry
 
     def validate(self):
         valid = True
         for d in self.details:
             if not d:
                 continue
-            validation = d.validate()
+            validation = d.validate(d.ve, d.ve.get())
             if validation is not True:
                 d.entry.configure(background='red')
                 valid = False
