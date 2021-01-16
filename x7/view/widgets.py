@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from x7.geom.typing import *
-
+from x7.view.platform import PCFG
 
 __all__ = ['ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar', 'ValidatingEntry']
 
@@ -144,7 +144,7 @@ class ValidatingEntry:
         :param label:       Optional text for a label to be displayed to the left entry field
         :param value:       Optional starting value
         :param validator:   Optional validation function, called with ValidatingEntry and current field value
-        :param row:         Optional row.  If row & col are set, then .grid() is called. Label goes at col, entry at col+1
+        :param row:         Optional row.  If row & col are set, call .grid().  Label goes at col, entry at col+1
         :param col:         Optional column.
         :param width:       Width of Entry field
         :param read_only:   True to make Entry field read-only.
@@ -153,7 +153,13 @@ class ValidatingEntry:
         self.validator = validator or (lambda ev, s: True)
         self.label = ttk.Label(frame, text=label, justify=tk.LEFT) if label else None
         self.entry_var = tk.StringVar(frame, value=str(value))
-        self.entry = ttk.Frame(frame, style='ValidationBorder')
+        if PCFG.ui_platform == 'darwin':
+            # TODO-Can't get darwin to work with ttk.Frame, so fall-back to tk.Frame and custom state method
+            self.entry = tk.Frame(frame)
+            self.entry.state = lambda state: \
+                self.entry.configure(bg=PCFG.frame_background if '!invalid' in state else 'red')
+        else:
+            self.entry = ttk.Frame(frame, style='ValidationBorder')
         self.entry.grid_columnconfigure(0, weight=1)
         self.entry_field = ttk.Entry(self.entry, textvariable=self.entry_var, width=width)
         self.entry_field.grid(row=0, column=0, padx=1, pady=1, sticky='we')

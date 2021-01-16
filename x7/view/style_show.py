@@ -150,7 +150,7 @@ def test_style():
     col_max = 10
     frame = ttk.Frame(root, padding=4)
     frame.pack()
-    top = tk.Frame(frame)
+    top = ttk.Frame(frame)
     top.grid(column=0, columnspan=col_max, row=0, sticky='we')
     top.grid_columnconfigure(0, weight=1)
     top.grid_columnconfigure(3, weight=1)
