@@ -22,7 +22,7 @@ if sys.platform == 'win32':
         context_button_id=3,
         link_cursor='hand2',
         window_body='cyan',
-        frame_background='cyan',
+        frame_background='#f0f0f0',
     )
 elif sys.platform == 'darwin':
     # TODO-consider root.tk.call('tk', 'windowingsystem')=='aqua'
@@ -39,7 +39,7 @@ elif sys.platform == 'linux' and 'microsoft' in str(os.uname()).lower():
         context_button_id=3,
         link_cursor='hand2',
         window_body='#ffffff',      # from tcltk/tk/library/ttk/clamTheme.tcl, $colors(-lightest)
-        frame_background='cyan',
+        frame_background='#dcdad5',
     )
 else:
     raise ValueError('Unknown platform: ' + sys.platform + '/' + str(os.uname()))
