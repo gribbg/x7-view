@@ -2,6 +2,8 @@ from .shape import DigitizeShape
 from ..undo import Command
 from x7.geom.typing import *
 
+__all__ = ['CommandSimpleUndo']
+
 
 class CommandSimpleUndo(Command):
     """Undo command pattern that uses su_save() and su_restore()"""

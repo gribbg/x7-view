@@ -35,8 +35,13 @@ def tk_color(color):
 class TkIdSupport(object):
     """A mixin to support tracking tk_ids"""
     def __init__(self, dd: DigiDraw):
+        from ..digiview import DigitizeView
+
         self._tk_ids = {}
-        self.dd = dd
+        if isinstance(dd, DigitizeView):
+            self.dd = cast(DigitizeView, dd)        # type fix
+        else:
+            raise ValueError('DigitizeView required for dd, not %s' % type(dd))
 
     def tk_id(self, tk_id, tag=None):
         self._tk_ids[tk_id] = tag
@@ -72,6 +77,7 @@ class DigitizeShape(ABC, TkIdSupport):
             - Selected-Single: bold(?) + minimal edit handles
             - Selected-Detail: bold(?) + full edit handles (control points, ...)
     """
+    ALWAYS_CLOSED = True
     bbox_show = False
     bbox_penbrush = PenBrush('grey')    # dash=[2, 6]
 
@@ -90,20 +96,23 @@ class DigitizeShape(ABC, TkIdSupport):
         return self.__class__.__name__.replace('Digitize', '')
 
     def set_dd(self, dd: DigiDraw):
+        from ..digiview import DigitizeView
+
         assert self.dd is None
-        self.dd = dd
+        assert isinstance(dd, DigitizeView)
+        self.dd = cast(DigitizeView, dd)
 
     @abstractmethod
     def details(self) -> list:
         """List of Details instances describing values to edit"""
-        from ..details import Detail
+        from ..details import Detail, DetailBool
         return [
-            Detail(self.elem, 'name'),
-            Detail(self, 'PenBrush', value=self.elem.penbrush),
-            Detail(self, 'Closed', value=self.elem.closed),
-            Detail(self, 'XForm', value=self.elem.xform),
-            Detail(self, 'Class', value=self.__class__.__name__),
-            Detail(self, 'Selected', value=self in self.dd.selection),
+            Detail(self.elem, 'name', name='Name'),
+            Detail(self.elem, 'penbrush', name='PenBrush', ro=True),
+            DetailBool(self.elem, 'closed', name='Closed', ro=self.ALWAYS_CLOSED),
+            Detail(self.elem, 'xform', name='XForm', ro=True),
+            Detail(self.elem, '__class__', name='Class', value=self.__class__.__name__, ro=True),
+            Detail(self.elem, '', name='Selected', value=self in self.dd.selection, ro=True),
         ]
 
     def su_save(self):

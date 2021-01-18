@@ -177,7 +177,10 @@ class ValidatingEntry:
         else:
             self.entry = ttk.Frame(frame, style='ValidationBorder')
         self.entry.grid_columnconfigure(0, weight=1)
-        self.entry_field = ttk.Entry(self.entry, textvariable=self.entry_var, width=width)
+        if read_only:
+            self.entry_field = ttk.Label(self.entry, textvariable=self.entry_var, width=width)
+        else:
+            self.entry_field = ttk.Entry(self.entry, textvariable=self.entry_var, width=width)
         self.entry_field.grid(row=0, column=0, padx=1, pady=1, sticky='we')
         self.message = ttk.Label(self.entry, text='nothing', foreground='red')
         self.message.grid(row=1, column=0, sticky='we')

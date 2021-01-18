@@ -240,6 +240,7 @@ class EditHandleIntersections(EditHandleDisplayOnly):
 
     def __init__(self, shape: 'DigitizeCurve'):
         super().__init__(shape)
+        self.shape = shape  # type fix
         self.pts = []
         # print('eih.__init__: ', len(list(self.shapes())))
 
@@ -285,18 +286,21 @@ class EditHandleOffset(EditHandleDisplayOnly):
 
 
 class DigitizeCurve(DigitizeShape):
+    ALWAYS_CLOSED = False
+
     def __init__(self, dd: Optional[DigiDraw], curve: ElemCurve):
         super().__init__(dd, curve)
         self.elem = curve       # type fix
         self.need_edit_handle_refresh = False
 
     def details(self) -> list:
-        from ..details import Detail
+        from ..details import DetailRepr
 
+        ctx = dict(ControlPoint=ControlPoint, Point=Point, Vector=Vector)
         cps = self.elem.control_points
-        cp_detail = [Detail(self.elem, 'Points', value=repr(cps[0].round(2)))] + \
-                    [Detail(self.elem, '', value=repr(cp.round(2))) for cp in cps]
-        return super().details() + [Detail(self.elem, 'closed')] + cp_detail
+        cp_detail = [DetailRepr(cps, idx, name='' if idx else 'Points', value=cp.round(4), ctx=ctx, ro=False)
+                     for idx, cp in enumerate(cps)]
+        return super().details() + cp_detail
 
     def edit_handle_create(self) -> List[EditHandle]:
         # Sigh.  A little bit of typing goofiness

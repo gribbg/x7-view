@@ -12,13 +12,13 @@ from x7.view.widgets import ValidatingEntry
 import x7.view.style
 
 
-def stylename_elements_options(stylename):
+def style_element_options(style_name):
     """Function to expose the options of every element associated to a widget
-       stylename."""
+       style_name."""
     # Based on: https://stackoverflow.com/a/48933106/14856977
 
     style = ttk.Style()
-    layout = style.layout(stylename)
+    style_layout = style.layout(style_name)
 
     def elements(layout):
         out = []
@@ -44,14 +44,9 @@ def stylename_elements_options(stylename):
             out[-1] = out[-1] + ']'
         return out
 
-    data = dict(
-        name=stylename,
-        layout=layout,
-        elements=elements(layout),
-    )
-    print('%s:' % stylename)
-    print('eo(%s): %s' % (stylename, style.element_options(stylename)))
-    print('\n'.join(layout_format(layout, '  ')))
+    print('%s:' % style_name)
+    print('eo(%s): %s' % (style_name, style.element_options(style_name)))
+    print('\n'.join(layout_format(style_layout, '  ')))
 
 
 def find_themes():
@@ -74,7 +69,7 @@ def find_themes():
     print(sorted(styles))
     for sn in sorted(styles):
         try:
-            stylename_elements_options(sn)
+            style_element_options(sn)
         except tk.TclError:
             print('%s: not found' % sn)
 
@@ -90,27 +85,24 @@ def show_style():
     # exit(0)
 
     x7.view.style.setup_style()
-    stylename_elements_options('TEntry')
-    stylename_elements_options('TButton')
-    stylename_elements_options('TFrame')
-    stylename_elements_options('ValidationBorder')
+    style_element_options('TEntry')
+    style_element_options('TButton')
+    style_element_options('TFrame')
+    style_element_options('ValidationBorder')
     print(style.layout('ValidationBorder'))
     print(style.configure('ValidationBorder'))
     print(style.map('ValidationBorder'))
     exit(0)
 
-    print('Entry style.font is ', ttk.Style().lookup("TEntry", 'font'))
-    print('Entry style.bg is ', ttk.Style().lookup("TEntry", 'background'))
-    print('Entry style.fbg is ', ttk.Style().lookup("TEntry", 'fieldbackground'))
-    print('Entry style.fbg.disabled is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('disabled', )))
-    print('Entry style.fbg is ', ttk.Style().lookup("TEntry", 'fieldbackground'))
-    print('Entry style.fbg.ro is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('readonly', )))
+    def dump_info():
+        print('Entry style.font is ', ttk.Style().lookup("TEntry", 'font'))
+        print('Entry style.bg is ', ttk.Style().lookup("TEntry", 'background'))
+        print('Entry style.fbg is ', ttk.Style().lookup("TEntry", 'fieldbackground'))
+        print('Entry style.fbg.disabled is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('disabled', )))
+        print('Entry style.fbg.ro is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('readonly', )))
+    dump_info()
     x7.view.style.setup_style()
-    print('Entry style.font is ', ttk.Style().lookup("TEntry", 'font'))
-    print('Entry style.bg is ', ttk.Style().lookup("TEntry", 'background'))
-    print('Entry style.fbg is ', ttk.Style().lookup("TEntry", 'fieldbackground'))
-    print('Entry style.fbg.disabled is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('disabled', )))
-    print('Entry style.fbg.ro is ', ttk.Style().lookup("TEntry", 'fieldbackground', ('readonly', )))
+    dump_info()
     exit(0)
 
 
@@ -190,7 +182,7 @@ def test_style():
         f.scale_variable.set(50.0)
         return f, ls
 
-    def make_entry_v(outer):
+    def make_entry_v(outer, read_only=False):
         def validator(_entry: ValidatingEntry, s: str):
             s = s.lower()
             if 'invalid' in s:
@@ -199,7 +191,8 @@ def test_style():
                 else:
                     return False
             return True
-        ev = ValidatingEntry(outer, width=40, value='Invalid entry with message', validator=validator)
+        val = 'Read only entry' if read_only else 'Invalid entry with message'
+        ev = ValidatingEntry(outer, width=40, value=val, validator=validator, read_only=read_only)
         return ev.entry, ev.entry_field
 
     #  'Menubutton(Widget)', 'Notebook(Widget)',
@@ -217,6 +210,7 @@ def test_style():
         ('Combobox', lambda f: ttk.Combobox(f, values=tuple('abc'))),
         ('Entry', lambda f: ttk.Entry(f, width=40)),
         ('EntryV', make_entry_v),
+        ('EntryV RO', lambda f: make_entry_v(f, read_only=True)),
         ('Label', lambda f: ttk.Label(f, text='Example Text')),
         ('Scale', lambda f: make_labeled_scale(f, False)),
         ('ScaleV', lambda f: make_labeled_scale(f, False, 'v')),

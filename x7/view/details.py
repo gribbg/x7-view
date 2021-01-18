@@ -1,10 +1,11 @@
 """
     Edit details of a shape
 """
-
+import re
 import tkinter as tk
 from tkinter import ttk, simpledialog
 
+from x7.geom.geom import Point
 from x7.geom.typing import *
 from .digiview import DigitizeView
 from .platform import PCFG
@@ -13,51 +14,139 @@ from .shapes.shape_su import CommandSimpleUndo
 from .widgets import ValidatingEntry
 
 
-__all__ = ['Detail', 'DetailFloat', 'DetailPoint', 'DetailDialog']
+__all__ = ['Detail', 'DetailBool', 'DetailFloat', 'DetailPoint', 'DetailRepr', 'DetailDialog']
+
+DetailAddress = Union[int, str]
 
 
 class Detail(object):
     """A single detail to be edited"""
 
-    def __init__(self, target, attr: str, ro=False, value=None):
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
         self.target = target
-        self.attr = attr
-        self.ro = ro or value is not None
+        self.addr = addr
+        if name is None:
+            name = addr if isinstance(addr, str) else '[%s]' % addr
+        self.name = name
+        self.ro = ro
         self.ve: Optional[ValidatingEntry] = None
-        self.orig_value = value if value is not None else getattr(target, attr)
+        self.orig_value = value if value is not None else self.get_val()
 
     def elems(self, frame) -> tuple:        # label, entry field(s)
-        self.ve = ValidatingEntry(frame, label=self.attr, value=str(self.orig_value), validator=self.validate, read_only=self.ro)
+        self.ve = ValidatingEntry(frame, label=self.name, value=str(self.orig_value), validator=self.validate, read_only=self.ro)
         return self.ve.label, self.ve.entry
 
-    def validate(self, ve: ValidatingEntry, value: Any):
+    def get_val(self):
+        """Get value based on address"""
+        if isinstance(self.addr, str):
+            return getattr(self.target, self.addr)
+        elif isinstance(self.addr, int):
+            return self.target[self.addr]
+        else:
+            raise ValueError('Unknown addr type: %s' % type(self.target).__name__)
+
+    def set_val(self, val):
+        """Set value based on address"""
+        if isinstance(self.addr, str):
+            setattr(self.target, self.addr, val)
+        elif isinstance(self.addr, int):
+            self.target[self.addr] = val
+        else:
+            raise ValueError('Unknown addr type: %s' % type(self.target).__name__)
+
+    @staticmethod
+    def parse(val: str):
+        return val
+
+    def validate(self, ve: ValidatingEntry, value: str):
         """Return True if this entry is valid, error string otherwise"""
-        if self.ro or value != 'ERROR':
+        unused(ve)
+
+        if self.ro:
             return True
-        return "Error here"
+        try:
+            self.parse(value)
+        except ValueError as err:
+            return str(err)
+        return True
+
+    def get(self):
+        return self.parse(self.ve.get())
 
     def update(self):
         if not self.ro:
-            cur_val = getattr(self.target, self.attr)
-            new_val = self.ve.get()
-            print('update %s -> %s %s' % (self.attr, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
-            setattr(self.target, self.attr, new_val)
+            cur_val = self.get_val()
+            new_val = self.get()
+            print('update %s -> %s %s' % (self.addr, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
+            self.set_val(new_val)
+
+
+class DetailBool(Detail):
+    """Detail for bool"""
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
+        super().__init__(target, addr, ro=ro, value=value, name=name)
+
+    @classmethod
+    def parse(cls, val: str):
+        val = val.strip().lower()
+        if val in ('t', 'tr', 'tru', 'true'):
+            return True
+        # noinspection SpellCheckingInspection
+        if val in ('f', 'fa', 'fal', 'fals', 'false'):
+            return False
+        raise ValueError('Expected bool')
 
 
 class DetailPoint(Detail):
-    """Detail for Point(), read-only for now"""
+    """Detail for Point()"""
+    pattern = re.compile(r'^\s*\((.*),(.*)\)\s*$')
 
-    def __init__(self, target, attr: str, ro=True):
-        super().__init__(target, attr, ro=ro)
-        self.orig_value = self.orig_value.round(2)
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
+        super().__init__(target, addr, ro=ro, value=value, name=name)
+        self.orig_value = self.orig_value.round(4)
+
+    @classmethod
+    def parse(cls, val: str):
+        if match := cls.pattern.match(val):
+            x, y = match.groups()
+            try:
+                return Point(float(x), float(y))
+            except ValueError:
+                pass
+
+        raise ValueError('expected point: (x: float, y: float)')
 
 
 class DetailFloat(Detail):
-    """Detail for float, read-only for now"""
+    """Detail for float"""
 
-    def __init__(self, target, attr: str, ro=True):
-        super().__init__(target, attr, ro=ro)
-        self.orig_value = round(self.orig_value, 2)
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
+        super().__init__(target, addr, ro=ro, value=value, name=name)
+        self.orig_value = round(self.orig_value, 4)
+
+    @staticmethod
+    def parse(val: str):
+        return float(val)
+
+
+class DetailRepr(Detail):
+    """Detail for type that can be repr() / eval()"""
+
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None, ctx=None):
+        super().__init__(target, addr, ro=ro, value=value, name=name)
+        self.orig_type = type(self.orig_value)
+        self.orig_value = repr(self.orig_value)
+        self.ctx: dict = ctx or {}
+
+    def parse(self, val: str):
+        try:
+            parsed = eval(val, self.ctx, {})
+        except Exception as err:
+            print('DR.parse:', err)
+            raise ValueError('Not a valid %s' % self.orig_type.__name__)
+        if not isinstance(parsed, self.orig_type):
+            raise ValueError('Expected a %s' % self.orig_type.__name__)
+        return parsed
 
 
 class DetailDialog(simpledialog.Dialog):
@@ -94,8 +183,9 @@ class DetailDialog(simpledialog.Dialog):
         for row, detail in enumerate(self.details):
             if detail:
                 label, entry = detail.elems(frame)
-                label.grid(row=row, column=0, padx=5, pady=5, sticky=tk.W)
-                entry.grid(row=row, column=1, padx=5, sticky=tk.W+tk.E)
+                if label:
+                    label.grid(row=row, column=0, padx=5, pady=5, sticky='w')
+                entry.grid(row=row, column=1, padx=5, sticky='we')
             else:
                 sep = ttk.Separator(frame)
                 sep.grid(row=row, column=0, columnspan=2, padx=5, pady=5, sticky='we')

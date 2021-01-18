@@ -16,8 +16,8 @@ class DigitizeRectangle(DigitizeShape):
         from ..details import DetailPoint
         return super().details() + [
             None,
-            DetailPoint(self.elem, 'p1', True),
-            DetailPoint(self.elem, 'p2', True),
+            DetailPoint(self.elem, 'p1'),
+            DetailPoint(self.elem, 'p2'),
         ]
 
     def edit_handle_create(self) -> List['EditHandle']:
