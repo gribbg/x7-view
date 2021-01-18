@@ -36,6 +36,16 @@ class Detail(object):
         self.ve = ValidatingEntry(frame, label=self.name, value=str(self.orig_value), validator=self.validate, read_only=self.ro)
         return self.ve.label, self.ve.entry
 
+    @property
+    def addr_text(self):
+        """Text version of address"""
+        if isinstance(self.addr, str):
+            return '.%s' % self.addr
+        elif isinstance(self.addr, int):
+            return '%s[%s]' % (self.name, self.addr)
+        else:
+            raise ValueError('Unknown addr type: %s' % type(self.target).__name__)
+
     def get_val(self):
         """Get value based on address"""
         if isinstance(self.addr, str):
@@ -77,7 +87,7 @@ class Detail(object):
         if not self.ro:
             cur_val = self.get_val()
             new_val = self.get()
-            print('update %s -> %s %s' % (self.addr, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
+            print('update %s -> %s %s' % (self.addr_text, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
             self.set_val(new_val)
 
 
