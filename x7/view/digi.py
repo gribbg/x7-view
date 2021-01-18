@@ -7,15 +7,16 @@ from tkinter import messagebox
 from tkinter import filedialog
 import screeninfo
 
+from x7.geom.typing import *
 from x7.geom.colors import PenBrush
 from x7.geom.drawing import DrawingContext
 from x7.geom.geom import Vector, Point
 from x7.geom.model import ControlPoint, Group, DumpContext, Elem, GroupBuilder
 from x7.geom.transform import Transform
+from .style import setup_style
 from .shapes import *
 from .digibase import *
 from .digiview import *
-from x7.geom.typing import *
 
 
 class TopLevelContextMenu(object):
@@ -204,6 +205,7 @@ class DigitizeController(object):
         self.model = model.the_group if isinstance(model, GroupBuilder) else model
         self.model_filter = model_filter
         self.master = tk.Tk()
+        setup_style()
         self.callbacks = CallbacksDC(self)
         # print('cb trace=', self.callbacks.trace)
         self.view = self.make_view()
