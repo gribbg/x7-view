@@ -142,8 +142,7 @@ class DetailRepr(Detail):
         try:
             parsed = eval(val, self.ctx, {})
         except Exception as err:
-            print('DR.parse:', err)
-            raise ValueError('Not a valid %s' % self.orig_type.__name__)
+            raise ValueError('Invalid %s: %s' % (self.orig_type.__name__, err))
         if not isinstance(parsed, self.orig_type):
             raise ValueError('Expected a %s' % self.orig_type.__name__)
         return parsed
