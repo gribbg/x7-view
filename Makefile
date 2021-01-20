@@ -1,7 +1,7 @@
 default: help
 
-# Based on https://gist.github.com/lumengxi/0ae4645124cd4066f676
-.PHONY: clean clean-pyc clean-build clean-os clean-test docs git-clean
+# Derived from https://gist.github.com/lumengxi/0ae4645124cd4066f676
+.PHONY: clean clean-pyc clean-build clean-os clean-test docs git-clean icons
 
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -16,6 +16,9 @@ export BROWSER_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 PYTHON := ./venv/bin/python3
 SYS_PYTHON := python3.8
+INKSCAPE := /Applications/Inkscape.app/Contents/MacOS/inkscape
+ICONS_SRC := x7/view/resources/icons-src
+ICONS_GEN := x7/view/resources/icons
 
 # Don't descend into any dotted dirs or venv.  Use like '$(FIND_SKIP) -other -find -args'
 FIND_SKIP := find -E . -regex './(\..*|venv).*' -prune -o
@@ -53,6 +56,7 @@ clean-build:
 	rm -fr .eggs/
 	$(FIND_SKIP) -name '*.egg-info' -exec rm -fr {} +
 	$(FIND_SKIP) -name '*.egg' -exec rm -f {} +
+	# find icons/ -name '*.png' -exec rm -f {} +
 
 clean-os:
 	$(FIND_SKIP) -name '.DS_Store' -exec rm -fr {} +
@@ -85,6 +89,25 @@ coverage:
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
+
+icons_full := $(wildcard $(ICONS_SRC)/*.svg)
+icons_24 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-24x24.png)
+icons_32 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-32x32.png)
+icons_64 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-64x64.png)
+icons_all := $(icons_24) $(icons_32) $(icons_64)
+
+$(ICONS_GEN)/%-24x24.png: $(ICONS_SRC)/%.svg
+	$(INKSCAPE) -o $@ -w 24 -h 24 $<
+
+$(ICONS_GEN)/%-32x32.png: $(ICONS_SRC)/%.svg
+	$(INKSCAPE) -o $@ -w 32 -h 32 $<
+
+$(ICONS_GEN)/%-64x64.png: $(ICONS_SRC)/%.svg
+	$(INKSCAPE) -o $@ -w 64 -h 64 $<
+
+icons24: $(icons_24)
+
+icons: $(icons_all)
 
 docs:
 	rm -f docs/$(PROJECT_DIR).rst
