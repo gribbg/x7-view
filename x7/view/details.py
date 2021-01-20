@@ -86,8 +86,10 @@ class Detail(object):
     def update(self):
         if not self.ro:
             cur_val = self.get_val()
+            cur_val_displayed = cur_val if isinstance(cur_val, str) else repr(cur_val)
             new_val = self.get()
-            print('update %s -> %s %s' % (self.addr_text, new_val, '[Same]' if cur_val == new_val else ('[was %s]' % cur_val)))
+            msg = '[Same]' if cur_val == new_val else ('[was %s]' % cur_val_displayed)
+            print('update %s -> %s %s' % (self.addr_text, new_val, msg))
             self.set_val(new_val)
 
 

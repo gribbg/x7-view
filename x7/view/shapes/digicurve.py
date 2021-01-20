@@ -271,11 +271,11 @@ class EditHandleIntersections(EditHandleDisplayOnly):
 class EditHandleOffset(EditHandleDisplayOnly):
     """An offset curve, just for fun"""
 
-    def __init__(self, shape: 'DigitizeCurve'):
+    def __init__(self, shape: 'DigitizeCurve', offset: float):
         super().__init__(shape)
         self.shape = shape      # type fix
         self.poly = self.shape_poly('green')
-        self.offset = 5
+        self.offset = offset
 
     def update_coords(self):
         offset_curve = self.shape.elem.offset(self.offset)
@@ -292,6 +292,7 @@ class DigitizeCurve(DigitizeShape):
         super().__init__(dd, curve)
         self.elem = curve       # type fix
         self.need_edit_handle_refresh = False
+        self.offsets = (5, )
 
     def details(self) -> list:
         from ..details import DetailRepr
@@ -300,14 +301,15 @@ class DigitizeCurve(DigitizeShape):
         cps = self.elem.control_points
         cp_detail = [DetailRepr(cps, idx, name='' if idx else 'Points', value=cp.round(4), ctx=ctx, ro=False)
                      for idx, cp in enumerate(cps)]
-        return super().details() + cp_detail
+        return super().details() + [DetailRepr(self, 'offsets', name='Offsets')] +  cp_detail
 
     def edit_handle_create(self) -> List[EditHandle]:
         # Sigh.  A little bit of typing goofiness
         eh: List[EditHandle] = [EditHandleControlPoint(self, cp) for cp in self.elem.control_points]
         eh.extend([EditHandleInterestingPoints(self, a, b) for a, b in iter_rotate(self.elem.control_points)])
         eh.append(EditHandleIntersections(self))
-        eh.append(EditHandleOffset(self))
+        for offset in self.offsets:
+            eh.append(EditHandleOffset(self, offset))
         return eh
 
     def update(self):
