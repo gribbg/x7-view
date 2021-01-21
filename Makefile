@@ -91,10 +91,14 @@ coverage:
 	$(BROWSER) htmlcov/index.html
 
 icons_full := $(wildcard $(ICONS_SRC)/*.svg)
+icons_16 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-16x16.png)
 icons_24 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-24x24.png)
 icons_32 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-32x32.png)
 icons_64 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-64x64.png)
-icons_all := $(icons_24) $(icons_32) $(icons_64)
+icons_all := $(icons_16) $(icons_24) $(icons_32) $(icons_64)
+
+$(ICONS_GEN)/%-16x16.png: $(ICONS_SRC)/%.svg
+	$(INKSCAPE) -o $@ -w 16 -h 16 $<
 
 $(ICONS_GEN)/%-24x24.png: $(ICONS_SRC)/%.svg
 	$(INKSCAPE) -o $@ -w 24 -h 24 $<

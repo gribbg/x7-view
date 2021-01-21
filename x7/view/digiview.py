@@ -250,8 +250,8 @@ class DigitizeView(DigiDraw):
         self.mode_buttons = [select_button, add_button]
 
         return [
-            ttk.Button(master, text='Undo', style='Toolbutton', command=binder('edit_undo')),     # TODO - indicate if undo/redo is available
-            ttk.Button(master, text='Redo', style='Toolbutton', command=binder('edit_redo')),
+            Toolbutton(master, icon='undo', command=binder('edit_undo')),     # TODO - indicate if undo/redo is available
+            Toolbutton(master, icon='redo', command=binder('edit_redo')),
             ttk.Button(master, text='Show', style='Toolbutton', command=binder('edit_undo_show')),
             select_button,
             add_button,

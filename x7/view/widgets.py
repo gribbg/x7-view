@@ -1,17 +1,38 @@
 import tkinter as tk
 from tkinter import ttk
 from x7.geom.typing import *
+
+from x7.view import icons
 from x7.view.platform import PCFG
 
 __all__ = [
-    'RadioToolbutton',
+    'Toolbutton', 'RadioToolbutton',
     'ButtonBar', 'ButtonFrame', 'CanvasScrolled', 'StatusBar', 'ValidatingEntry']
 
 
-class RadioToolbutton(ttk.Radiobutton):
+class IconHolder:
+    @staticmethod
+    def handle_icon(icon, kwargs):
+        """Handle icon= in init"""
+        if icon:
+            icon = icons.icon(icon, size=16)
+            kwargs['image'] = icon
+        return icon
+
+
+class Toolbutton(ttk.Radiobutton, IconHolder):
+    """A ttk.Button in the Toolbutton style with icon= support"""
+
+    def __init__(self, master, icon=None, **kwargs):
+        self.icon = self.handle_icon(icon, kwargs)
+        super().__init__(master, style='Toolbutton', **kwargs)
+
+
+class RadioToolbutton(ttk.Radiobutton, IconHolder):
     """A ttk.Radiobutton in the Toolbutton style with .mode_tag and .select()/.deselect()"""
 
-    def __init__(self, master, mode_tag=None, **kwargs):
+    def __init__(self, master, mode_tag=None, icon=None, **kwargs):
+        self.icon = self.handle_icon(icon, kwargs)
         super().__init__(master, style='Toolbutton', **kwargs)
         self.mode_tag = mode_tag
 
