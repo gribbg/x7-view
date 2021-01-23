@@ -20,20 +20,22 @@ class IconHolder:
         return icon
 
 
-class Toolbutton(ttk.Radiobutton, IconHolder):
+class Toolbutton(ttk.Button, IconHolder):
     """A ttk.Button in the Toolbutton style with icon= support"""
 
-    def __init__(self, master, icon=None, **kwargs):
+    def __init__(self, master, icon=None, takefocus=True, **kwargs):
         self.icon = self.handle_icon(icon, kwargs)
-        super().__init__(master, style='Toolbutton', **kwargs)
+        super().__init__(master, style='Toolbutton', takefocus=takefocus, **kwargs)
 
 
 class RadioToolbutton(ttk.Radiobutton, IconHolder):
     """A ttk.Radiobutton in the Toolbutton style with .mode_tag and .select()/.deselect()"""
 
-    def __init__(self, master, mode_tag=None, icon=None, **kwargs):
+    def __init__(self, master, *, variable=None, mode_tag=None, icon=None, takefocus=True, **kwargs):
         self.icon = self.handle_icon(icon, kwargs)
-        super().__init__(master, style='Toolbutton', **kwargs)
+        if variable is None:
+            raise ValueError('variable must be supplied')
+        super().__init__(master, style='Toolbutton', takefocus=takefocus, variable=variable, **kwargs)
         self.mode_tag = mode_tag
 
     def select(self):
@@ -47,16 +49,16 @@ class ButtonBar(ttk.Frame):
     """A row of buttons"""
 
     def __init__(self, master, buttons):
-        """Init from list of str, (str, func), tk.Button"""
+        """Init from list of str, (str, func), ttk.Button"""
         super().__init__(master)
 
         for n, button in enumerate(buttons(self)):
             if not button:
-                button = tk.Label(self, text=' | ')
+                button = ttk.Label(self, text=' | ')
             button.grid(row=0, column=n, sticky='nw')
 
 
-class ButtonFrame(tk.Frame):
+class ButtonFrame(ttk.Frame):
     """
         A frame with a button bar on the top and contents below.
     """
@@ -87,27 +89,35 @@ class CanvasScrolled(tk.Frame):
     """A canvas object with scroll bars"""
 
     def __init__(self, master):
-        super().__init__(master, border=3, relief=tk.RIDGE)
-        self.canvas: tk.Canvas = tk.Canvas(self, width=200, height=100)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        super().__init__(master)
+        canvas_row = 1
+        if canvas_row:
+            # TODO-should the separators be part of this object or the parent?
+            frame = self
+            ttk.Separator(frame).grid(row=canvas_row-1, column=0, columnspan=2, sticky='we')
+            ttk.Separator(frame).grid(row=canvas_row+2, column=0, columnspan=2, sticky='we')
+        else:
+            self.frame = ttk.Frame(self)
+            self.frame.pack(pady=1)
+            frame = self.frame
+        self.canvas: tk.Canvas = tk.Canvas(frame, width=200, height=100)
+        frame.grid_rowconfigure(canvas_row, weight=1)
+        frame.grid_columnconfigure(0, weight=1)
 
-        x_scrollbar = ttk.Scrollbar(self, orient=tk.HORIZONTAL)
-        x_scrollbar.grid(row=1, column=0, sticky='ew')
+        x_scrollbar = ttk.Scrollbar(frame, orient=tk.HORIZONTAL)
+        x_scrollbar.grid(row=canvas_row+1, column=0, sticky='ew')
 
-        y_scrollbar = ttk.Scrollbar(self)
-        y_scrollbar.grid(row=0, column=1, sticky='ns')
+        y_scrollbar = ttk.Scrollbar(frame)
+        y_scrollbar.grid(row=canvas_row, column=1, sticky='ns')
 
         self.canvas.config(xscrollcommand=x_scrollbar.set, yscrollcommand=y_scrollbar.set)
-        self.canvas.grid(row=0, column=0, sticky='nsew')
-        ttk.Sizegrip(self).grid(column=1, row=1, sticky='se')
+        self.canvas.grid(row=canvas_row, column=0, sticky='nsew')
+        ttk.Sizegrip(frame).grid(row=canvas_row+1, column=1, sticky='se')
         x_scrollbar.config(command=self.canvas.xview)
         y_scrollbar.config(command=self.canvas.yview)
 
         self.x_scrollbar = x_scrollbar
         self.y_scrollbar = y_scrollbar
-
-    # self.pack(fill='both', expand=True)
 
     @staticmethod
     def demo():
@@ -118,13 +128,13 @@ class CanvasScrolled(tk.Frame):
         root.mainloop()
 
 
-class StatusBar(tk.Frame):
+class StatusBar(ttk.Frame):
     # TODO-keep log of time, message
     # TODO-Double-click or some other operation to display all messages in separate window
     # TODO-that window should update as new status messages come out
     def __init__(self, master):
-        tk.Frame.__init__(self, master)
-        self.label = tk.Label(self, bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        super().__init__(master)
+        self.label = ttk.Label(self, anchor=tk.W)
         self.label.pack(fill=tk.X)
 
     def set(self, s: str):

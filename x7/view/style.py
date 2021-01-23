@@ -1,3 +1,4 @@
+# import tkinter as tk
 from tkinter import ttk
 
 
@@ -10,7 +11,7 @@ STYLE_SETTINGS = {
                 (['invalid', 'disabled'], '#ffc0c0'),
             ],
         },
-    }
+    },
 }
 
 

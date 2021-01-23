@@ -8,7 +8,7 @@ import tkinter
 from tkinter import ttk
 import tkinter as tk
 from typing import List
-from x7.view.widgets import ValidatingEntry
+from x7.view.widgets import ValidatingEntry, Toolbutton, RadioToolbutton
 import x7.view.style
 
 
@@ -85,6 +85,13 @@ def show_style():
     # exit(0)
 
     x7.view.style.setup_style()
+    style_element_options('TLabel')
+    style_element_options('TSeparator')
+    style_element_options('TRadiobutton')
+    style_element_options('TCheckbutton')
+    style_element_options('TCombobox')
+    style_element_options('TLabel')
+    style_element_options('TLabelframe')
     style_element_options('TEntry')
     style_element_options('TButton')
     style_element_options('TFrame')
@@ -201,10 +208,17 @@ def test_style():
     #  'Separator(Widget)', 'Sizegrip(Widget)', 'Spinbox(Entry)',
     #  'Treeview(Widget, tkinter.XView, tkinter.YView)',
 
+    radio_var = tk.StringVar(root, value='rb2')
+    check_var = tk.IntVar(root, value=1)
+
     widget_init_data = [
         ('Button', lambda f: ttk.Button(f, text='Button Text')),
-        ('Checkbutton', lambda f: ttk.Checkbutton(f, text='Checkbutton Text')),
-        ('Radiobutton', lambda f: ttk.Radiobutton(f, text='Radiobutton Text')),
+        ('Checkbutton', lambda f: ttk.Checkbutton(f, text='Checkbutton Text', variable=check_var)),
+        ('Radiobutton', lambda f: ttk.Radiobutton(f, text='Radiobutton Text', value='rb1', variable=radio_var)),
+        ('RadioToolbutton', lambda f: RadioToolbutton(f, value='rb2', text='RadioToolbutton Text', variable=radio_var)),
+        ('RadioTb w/image', lambda f: RadioToolbutton(f, value='rb3', icon='pencil', variable=radio_var)),
+        ('Toolbutton', lambda f: Toolbutton(f, text='Toolbutton Text')),
+        ('Toolbutton w/img', lambda f: Toolbutton(f, icon='pencil')),
         ('Frame', make_frame),
         ('Labelframe', make_labelframe),
         ('Combobox', lambda f: ttk.Combobox(f, values=tuple('abc'))),
@@ -243,6 +257,17 @@ def test_style():
         item_to_grid.grid(column=1, row=row, sticky='w')
         if name == 'ScaleV':
             item_to_grid.grid(column=3, row=row-1, rowspan=3, sticky='w')
+        if 'Radio' in name or 'Check' in name:
+            if 'Radio' in name:
+                var_to_use = radio_var
+                # var_to_use.set(item.configure('value')[-1])
+            else:
+                var_to_use = check_var
+                # var_to_use.set(True)
+            rf = ttk.Frame(frame)
+            rf.grid(column=3, row=row, sticky='w')
+            ttk.Label(rf, text='Variable: ').grid(column=0, row=0, sticky='w')
+            ttk.Label(rf, textvariable=var_to_use).grid(column=1, row=0, sticky='w')
         try:
             item_to_grid.configure(justify=tk.LEFT)
         except tkinter.TclError:
