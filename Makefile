@@ -1,7 +1,7 @@
 default: help
 
 # Derived from https://gist.github.com/lumengxi/0ae4645124cd4066f676
-.PHONY: clean clean-pyc clean-build clean-os clean-test docs git-clean icons
+.PHONY: clean clean-pyc clean-build clean-os clean-test docs git-clean icons icons_test
 
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
@@ -90,26 +90,16 @@ coverage:
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
-icons_full := $(wildcard $(ICONS_SRC)/*.svg)
-icons_16 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-16x16.png)
-icons_24 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-24x24.png)
-icons_32 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-32x32.png)
-icons_64 := $(icons_full:$(ICONS_SRC)/%.svg=$(ICONS_GEN)/%-64x64.png)
-icons_all := $(icons_16) $(icons_24) $(icons_32) $(icons_64)
+icon_names := $(patsubst $(ICONS_SRC)/%.svg,%,$(wildcard $(ICONS_SRC)/*.svg))
+icon_sizes := 16 24 32 64
+icons_all := $(foreach size,$(icon_sizes),$(foreach name,$(icon_names),$(ICONS_GEN)/$(name)-$(size)x$(size).png))
+define ICON_template
+$$(ICONS_GEN)/%-$(1)x$(1).png: $$(ICONS_SRC)/%.svg
+	$$(INKSCAPE) -o $$@ -w $(1) -h $(1) $$<
+endef
+$(foreach size,$(icon_sizes),$(eval $(call ICON_template,$(size))))
 
-$(ICONS_GEN)/%-16x16.png: $(ICONS_SRC)/%.svg
-	$(INKSCAPE) -o $@ -w 16 -h 16 $<
-
-$(ICONS_GEN)/%-24x24.png: $(ICONS_SRC)/%.svg
-	$(INKSCAPE) -o $@ -w 24 -h 24 $<
-
-$(ICONS_GEN)/%-32x32.png: $(ICONS_SRC)/%.svg
-	$(INKSCAPE) -o $@ -w 32 -h 32 $<
-
-$(ICONS_GEN)/%-64x64.png: $(ICONS_SRC)/%.svg
-	$(INKSCAPE) -o $@ -w 64 -h 64 $<
-
-icons24: $(icons_24)
+icons_test: $(ICONS_GEN)/redo-32x32.png $(ICONS_GEN)/undo-24x24.png
 
 icons: $(icons_all)
 
