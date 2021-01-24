@@ -14,13 +14,14 @@ from .shapes.shape_su import CommandSimpleUndo
 from .widgets import ValidatingEntry
 
 
-__all__ = ['Detail', 'DetailBool', 'DetailFloat', 'DetailPoint', 'DetailRepr', 'DetailDialog']
+__all__ = ['Detail', 'DetailBool', 'DetailInt', 'DetailFloat', 'DetailPoint', 'DetailRepr', 'DetailDialog']
 
 DetailAddress = Union[int, str]
 
 
 class Detail(object):
     """A single detail to be edited"""
+    VERBOSE = False
 
     def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
         self.target = target
@@ -88,8 +89,9 @@ class Detail(object):
             cur_val = self.get_val()
             cur_val_displayed = cur_val if isinstance(cur_val, str) else repr(cur_val)
             new_val = self.get()
-            msg = '[Same]' if cur_val == new_val else ('[was %s]' % cur_val_displayed)
-            print('update %s -> %s %s' % (self.addr_text, new_val, msg))
+            if self.VERBOSE:
+                msg = '[Same]' if cur_val == new_val else ('[was %s]' % cur_val_displayed)
+                print('update %s -> %s %s' % (self.addr_text, new_val, msg))
             self.set_val(new_val)
 
 
@@ -141,6 +143,17 @@ class DetailFloat(Detail):
         return float(val)
 
 
+class DetailInt(Detail):
+    """Detail for int"""
+
+    def __init__(self, target, addr: DetailAddress, ro=False, value=None, name: Optional[str] = None):
+        super().__init__(target, addr, ro=ro, value=value, name=name)
+
+    @staticmethod
+    def parse(val: str):
+        return int(val)
+
+
 class DetailRepr(Detail):
     """Detail for type that can be repr() / eval()"""
 
@@ -177,6 +190,8 @@ class DetailDialog(simpledialog.Dialog):
         w = ttk.Button(box, text="OK", command=self.ok, default=tk.ACTIVE)
         w.pack(side=tk.LEFT, padx=5, pady=5)
         w = ttk.Button(box, text="Cancel", command=self.cancel)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
+        w = ttk.Button(box, text="Apply", command=self.apply_button)
         w.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.bind("<Return>", self.ok)
@@ -223,6 +238,13 @@ class DetailDialog(simpledialog.Dialog):
                 d.update()
         self.undo_snap()
         self.undo_commit()
+
+    def apply_button(self, event=None):
+        """Just apply, but don't commit"""
+        for d in self.details:
+            if d:
+                d.update()
+        self.shape.update()
 
     def cancel(self, event=None):
         self.undo_abort()

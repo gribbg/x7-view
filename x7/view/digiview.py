@@ -159,6 +159,13 @@ class DigitizeView(DigiDraw):
         self.frame.pack(fill='both', expand=True)
         # self.set_model(self.model)
 
+    @property
+    def dc(self):
+        from .digi import CallbacksDC
+        if isinstance(self.callbacks, CallbacksDC):
+            return self.callbacks.dc
+        raise TypeError('Expected self.callbacks to be a CallbacksDC')
+
     def reset_draw(self, new_draw: DrawingContext):
         self.draw = new_draw
         self.base_image = self.draw.image()
