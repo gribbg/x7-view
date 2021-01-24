@@ -1,3 +1,4 @@
 include LICENSE README.rst
 graft tests
+global-include *.svg
 global-exclude *.py[cod]
