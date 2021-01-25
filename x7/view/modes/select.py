@@ -257,7 +257,7 @@ class ModeSelect(ModeCommon):
             print('Weird: mouse1 during mouse2 active: ai=', self.active_item)
             return
 
-        self.event_enrich('mouse_button1', event)
+        event = self.event_enrich('mouse_button1', event)
         if self.active_item:
             if hasattr(self.active_item, 'mouse_button1'):
                 self.active_item.mouse_button1(event)
@@ -270,13 +270,13 @@ class ModeSelect(ModeCommon):
             self.active_item = DragSelect(self.controller.view, (event.cx, event.cy))
 
     def mouse_button1_motion(self, event):
-        self.event_enrich('mouse_button1_motion', event, 'is')
+        event = self.event_enrich('mouse_button1_motion', event, 'is')
         if self.active_item:
             if hasattr(self.active_item, 'mouse_button1_motion'):
                 self.active_item.mouse_button1_motion(event)
 
     def mouse_button1_release(self, event):
-        self.event_enrich('mouse_button1_release', event, 'was')
+        event = self.event_enrich('mouse_button1_release', event, 'was')
         if self.active_item:
             if hasattr(self.active_item, 'mouse_button1_release'):
                 self.active_item.mouse_button1_release(event)
@@ -288,7 +288,7 @@ class ModeSelect(ModeCommon):
             # TODO-Ignore this mouse press during a drag action
             print('Weird: mouse2 during mouse1 drag.  Ignored. s.ai=', self.active_item)
             return
-        self.event_enrich('mouse_button2', event)
+        event = self.event_enrich('mouse_button2', event)
         if not self.active_item:
             self.controller.top_level_context_menu.popup(event)
         else:

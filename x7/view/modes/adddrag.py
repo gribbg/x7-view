@@ -1,8 +1,12 @@
 import math
+from math import copysign
 
 from x7.geom.colors import PenBrush
+from x7.geom.geom import Vector
 from x7.geom.typing import *
 from x7.geom.model import *
+
+from .common import ViewEvent
 from ..digi import DigitizeController
 from ..shapes import *
 from ..digiview import CommandShapeAdd
@@ -21,11 +25,11 @@ class ModeAddDrag(ModeAdd):
         """Start a drag operation at model space point mp"""
         raise NotImplementedError
 
-    def drag_extend(self, start, mp, curve):
+    def drag_extend(self, start, event: ViewEvent, shape):
         """Extend a drag operation to model space point mp"""
         raise NotImplementedError
 
-    def drag_finish(self, curve):
+    def drag_finish(self, shape):
         """Finish a drag operation.  Mostly a NOOP"""
         pass
 
@@ -49,7 +53,7 @@ class ModeAddDrag(ModeAdd):
             print('Weird: mouse1 during mouse2 active')
             return
 
-        self.event_enrich('mouse_button1', event)
+        event = self.event_enrich('mouse_button1', event)
         curve = self.drag_begin(event.mp)
         curve.update()
         self.controller.view.undo_begin(CommandShapeAdd(self.controller.view, curve))
@@ -58,15 +62,16 @@ class ModeAddDrag(ModeAdd):
 
     def mouse_button1_motion(self, event):
         if self.active_item:
-            self.event_enrich('mouse_button1_motion', event, 'is')
-            self.drag_extend(self.active_start, event.mp, self.active_item)
+            event = self.event_enrich('mouse_button1_motion', event, 'is')
+            self.drag_extend(self.active_start, event, self.active_item)
             self.active_item.update()
             self.controller.view.undo_snap()
         # print('motion: cvc.len=', len(self.controller.view.shapes), ' active=', self.active_item)
 
     def mouse_button1_release(self, event):
         if self.active_item:
-            self.event_enrich('mouse_button1_release', event, 'was')
+            event = self.event_enrich('mouse_button1_release', event, 'was')
+            unused(event)
             # print('Finish drag add of new thingie, reset mode(?)')
             self.drag_finish(self.active_item)
             self.undo_commit()
@@ -120,58 +125,57 @@ def rounded_bez(angle):
     return 4/3 * math.tan(math.radians(angle/4))
 
 
-class ModeAddRectangle(ModeAddDrag):
-    """Mode for adding via a single drag operation"""
+class ModeAddDragP1P2(ModeAddDrag):
+    """Mode for adding P1P2 shape via a single drag operation"""
 
-    SHAPE_NAME = 'Rect'
+    SHAPE_NAME = None
 
     def __init__(self, controller: DigitizeController):
         super().__init__(controller)
         # self.verbose = True
+
+    def drag_begin(self, mp) -> DigitizeShape:
+        """Start a drag operation at model space point mp"""
+        raise NotImplementedError
+
+    def drag_extend(self, start, event: ViewEvent, shape):
+        """Extend a drag operation to model space point mp"""
+        shape = cast(DigitizeP1P2, shape)
+        if event.shift:
+            # Force to square
+            mpv = event.mp - shape.elem.p1
+            mid = (abs(mpv.x) + abs(mpv.y))/2
+            sqv = Vector(copysign(mid, mpv.x), copysign(mid, mpv.y))
+            shape.elem.p2.restore(shape.elem.p1+sqv)
+        else:
+            shape.elem.p2.restore(event.mp)
+
+
+class ModeAddRectangle(ModeAddDragP1P2):
+    """Mode for adding via a single drag operation"""
+
+    SHAPE_NAME = 'Rect'
 
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""
         return DigitizeRectangle(self.controller.view, ElemRectangle('rectN', PenBrush('black'), mp, mp))
 
-    def drag_extend(self, start, mp, shape):
-        """Extend a drag operation to model space point mp"""
-        shape = cast(DigitizeRectangle, shape)
-        shape.elem.p2.restore(mp)
 
-
-class ModeAddRoundedRectangle(ModeAddDrag):
+class ModeAddRoundedRectangle(ModeAddDragP1P2):
     """Mode for adding via a single drag operation"""
 
     SHAPE_NAME = 'RRect'
-
-    def __init__(self, controller: DigitizeController):
-        super().__init__(controller)
-        # self.verbose = True
 
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""
         return DigitizeRoundedRectangle(self.controller.view, ElemRectangleRounded('rectN', PenBrush('black'), mp, mp, 25))
 
-    def drag_extend(self, start, mp, shape):
-        """Extend a drag operation to model space point mp"""
-        shape = cast(DigitizeRoundedRectangle, shape)
-        shape.elem.p2.restore(mp)
 
-
-class ModeAddEllipse(ModeAddDrag):
+class ModeAddEllipse(ModeAddDragP1P2):
     """Add an ellipse via a single drag operation"""
 
     SHAPE_NAME = 'Ellipse'
 
-    def __init__(self, controller: DigitizeController):
-        super().__init__(controller)
-        # self.verbose = True
-
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""
         return DigitizeEllipse(self.controller.view, ElemEllipse('ellipseN', PenBrush('black'), mp, mp))
-
-    def drag_extend(self, start, mp, shape):
-        """Extend a drag operation to model space point mp"""
-        shape = cast(DigitizeEllipse, shape)
-        shape.elem.p2.restore(mp)

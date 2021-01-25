@@ -301,7 +301,7 @@ class DigitizeCurve(DigitizeShape):
         cps = self.elem.control_points
         cp_detail = [DetailRepr(cps, idx, name='' if idx else 'Points', value=cp.round(4), ctx=ctx, ro=False)
                      for idx, cp in enumerate(cps)]
-        return super().details() + [DetailRepr(self, 'offsets', name='Offsets')] +  cp_detail
+        return super().details() + [DetailRepr(self, 'offsets', name='Offsets')] + cp_detail
 
     def edit_handle_create(self) -> List[EditHandle]:
         # Sigh.  A little bit of typing goofiness

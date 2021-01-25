@@ -1,24 +1,27 @@
 from .rect import *
+from .shape import *
+from .shape_su import CommandSimpleUndo
+from ..undo import Command
+from ..digibase import *
+from x7.geom.typing import *
+from x7.geom.geom import *
 from x7.geom.model import ElemRectangleRounded
 
 
-class DigitizeRoundedRectangle(DigitizeShape):
+class DigitizeRoundedRectangle(DigitizeP1P2):
     def __init__(self, dd: Optional[DigiDraw], rrect: ElemRectangleRounded):
         super().__init__(dd, rrect)
+        self.elem = rrect       # type fix
 
     def details(self):
-        from ..details import DetailFloat, DetailPoint
+        from ..details import DetailFloat
         return super().details() + [
-            None,
-            DetailPoint(self.elem, 'p1'),
-            DetailPoint(self.elem, 'p2'),
             DetailFloat(self.elem, 'radius'),
         ]
 
     def edit_handle_create(self) -> List[EditHandle]:
         return (
             super().edit_handle_create() +
-            [EditHandleRect(self, tag) for tag in EditHandleRect.COORD_MAP.keys()] +
             [EditHandleRadius(self)]
         )
 
@@ -32,6 +35,7 @@ class EditHandleRadius(EditHandle):
 
     def __init__(self, shape: DigitizeRoundedRectangle):
         super().__init__(shape)
+        self.shape = shape      # type fix
         self.handle = self.shape_oval('yellow', 'radius')
 
     def update_coords(self):

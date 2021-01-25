@@ -62,14 +62,14 @@ class ModeAddMultiClick(ModeAdd):
     def mouse_motion(self, event):
         # Mouse moving, but no button pressed
         if self.active_item:
-            self.event_enrich('mouse_motion', event, 'is')
+            event = self.event_enrich('mouse_motion', event, 'is')
             self.multi_move(self.active_item, event.mp)
             self.active_item.update()
             self.controller.view.undo_snap()
         # print('motion: cvc.len=', len(self.controller.view.shapes), ' active=', self.active_item)
 
     def mouse_button1(self, event):
-        self.event_enrich('mouse_button1', event, find=True)
+        event = self.event_enrich('mouse_button1', event, find=True)
         if self.active_item:
             assert isinstance(self.active_item, DigitizeCurve)
             curve = cast(DigitizeCurve, self.active_item)
@@ -92,7 +92,7 @@ class ModeAddMultiClick(ModeAdd):
 
     def mouse_button1_motion(self, event):
         if self.active_item:
-            self.event_enrich('mouse_button1_motion', event, 'is')
+            event = self.event_enrich('mouse_button1_motion', event, 'is')
             self.multi_drag(self.active_item, event.mp)
             self.controller.view.undo_snap()
             self.active_item.update()
@@ -102,7 +102,7 @@ class ModeAddMultiClick(ModeAdd):
         if self.mode_finish_on_release:
             self.mode_finish()
         elif self.active_item:
-            self.event_enrich('mouse_button1_release', event, 'was')
+            event = self.event_enrich('mouse_button1_release', event, 'was')
             self.multi_drag(self.active_item, event.mp)
             self.multi_drag_finish(self.active_item, event.mp)
             self.active_item.update()

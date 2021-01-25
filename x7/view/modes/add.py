@@ -1,3 +1,5 @@
+from x7.geom.typing import unused
+
 from ..digi import DigitizeController
 from .common import ModeCommon
 
@@ -34,15 +36,17 @@ class ModeAdd(ModeCommon):
             print('Weird: mouse1 during mouse2 active')
             return
 
-        self.event_enrich('mouse_button1', event)
+        event = self.event_enrich('mouse_button1', event)
+        unused(event)
         print('Begin add of new thingie')
 
     def mouse_button1_motion(self, event):
-        self.event_enrich('mouse_button1_motion', event, 'is')
+        event = self.event_enrich('mouse_button1_motion', event, 'is')
+        unused(event)
         print('Continue add of new thingie')
 
     def mouse_button1_release(self, event):
-        self.event_enrich('mouse_button1_release', event, 'was')
+        event = self.event_enrich('mouse_button1_release', event, 'was')
         print('Finish(?) add of new thingie')
         if hasattr(self.active_item, 'mouse_button1_release'):
             self.active_item.mouse_button1_release(event)

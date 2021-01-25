@@ -2,15 +2,18 @@ from ..undo import Command
 from x7.geom.typing import *
 from ..digibase import *
 from x7.geom.geom import *
-from x7.geom.model import ElemRectangle
+from x7.geom.model import ElemRectangle, ElemP1P2
 from .shape import *
 from .shape_su import CommandSimpleUndo
 from ..event import *
 
+__all__ = ['DigitizeP1P2', 'DigitizeRectangle', 'EditHandleRect']
 
-class DigitizeRectangle(DigitizeShape):
-    def __init__(self, dd: Optional[DigiDraw], rect: ElemRectangle):
-        super().__init__(dd, rect)
+
+class DigitizeP1P2(DigitizeShape):
+    def __init__(self, dd: Optional[DigiDraw], p1p2: ElemP1P2):
+        super().__init__(dd, p1p2)
+        self.elem = p1p2        # type fix
 
     def details(self):
         from ..details import DetailPoint
@@ -22,6 +25,12 @@ class DigitizeRectangle(DigitizeShape):
 
     def edit_handle_create(self) -> List['EditHandle']:
         return super().edit_handle_create() + [EditHandleRect(self, tag) for tag in EditHandleRect.COORD_MAP.keys()]
+
+
+class DigitizeRectangle(DigitizeP1P2):
+    def __init__(self, dd: Optional[DigiDraw], rect: ElemRectangle):
+        super().__init__(dd, rect)
+        self.elem = rect        # type fix
 
 
 class EditHandleRect(EditHandle):
