@@ -1,7 +1,7 @@
 from tkinter import *
 import re
 import time
-
+from typing import Dict, Tuple
 
 root = Tk()
 top = Frame(root, width=500, height=500)
@@ -29,25 +29,75 @@ Label(top, text='').pack()
 Label(top, text=' '*80).pack()
 
 
-log_one = True
+event_types_seen = set()
+event_attributes: Dict[str, Tuple[set, set]] = dict()
+event_attrs_known = '''
+    serial num focus height width keycode state time
+    x y x_root y_root char send_event keysym keysym_num
+    type widget delta
+'''.split()
 
 
-def first(event):
-    global log_one
-    if log_one:
-        log_one = False
+def track_event(event, event_name):
+    if not event_types_seen:
         print(event.state, event)
         pat = re.compile(r'.* state=([^ ]*) .*')
         for n in range(16):
             event.state = 1 << n
             m = pat.match(str(event))
             print('%s = 0x%04x' % (m.group(1).upper(), event.state))
+    if event_name not in event_types_seen:
+        event_types_seen.add(event_name)
+        from pprint import pp
+        pp({'Event: '+event_name: event.__dict__})
+    for k, v in event.__dict__.items():
+        attr = event_attributes.setdefault(k, (set(), set()))
+        attr[0].add(type(v))
+        attr[1].add(v)
+    for attr in event_attrs_known:
+        if not hasattr(event, attr):
+            event_attributes.setdefault(attr, (set(), set()))[1].add('Missing')
 
 
-def callback(evname):
+def track_dump():
+    print('- ' * 60)
+    print('%d events seen: %s' % (len(event_types_seen), ', '.join(sorted(event_types_seen))))
+    print('%d event attributes seen' % len(event_attributes))
+    attrs_found = set(event_attributes.keys())
+    print('af: ', attrs_found)
+    print('ak: ', event_attrs_known)
+    print('afd:', list(attrs_found.difference(event_attrs_known)))
+    attrs_to_iter = event_attrs_known + list(attrs_found.difference(event_attrs_known))
+
+    def fmt(val):
+        if isinstance(val, EventType):
+            return 'EventType.%s' % val
+        if isinstance(val, Misc):
+            return 'tkinter.%s' % type(val).__name__
+        return repr(val)
+    for attr in attrs_to_iter:
+        attr_types, attr_values = event_attributes[attr]
+        types = ', '.join(t.__name__ for t in attr_types)
+        print('   %-12s: %s' % (attr, types))
+        print('      [%d]: %s' % (len(attr_values), ', '.join(fmt(z) for z in list(attr_values)[:20])))
+
+    print('__init__')
+    for attr in attrs_to_iter:
+        attr_types, attr_values = event_attributes[attr]
+        if len(attr_types) > 1:
+            types = 'Union[%s]' % ', '.join(t.__name__ for t in attr_types)
+        else:
+            types = attr_types.pop().__name__
+        print("        %s: %s = %r" % (attr, types, '??' if '??' in attr_values else 'unknown'))
+        if 'Missing' in attr_values:
+            print('        ...missing')
+
+
+def callback(evname: str, verbose=False):
     def actual_func(ev):
-        first(ev)
+        track_event(ev, evname)
         print('cb for %s: %s .state: %r .widget: %s' % (evname, ev, ev.state, ev.widget))
+    print('Cb:', evname, verbose)
     return actual_func
 
 
@@ -126,18 +176,20 @@ def bindall(root):
     everything.update(virtual_events)
     everything.remove('<Motion>')
     print('everything: ', sorted(everything))
+    verbose_set = {'<%s>' % ev for ev in ('KeyPress', 'ButtonPress')}
     for ev in sorted(everything):
+        verbose = ev in verbose_set
         try:
             do_add = not False
-            root.bind_all(ev, callback(ev), do_add)
-            root.bind(ev, callback(ev), do_add)
+            root.bind_all(ev, callback(ev, verbose), do_add)
+            root.bind(ev, callback(ev, verbose), do_add)
             root.bind_class('Menubutton', ev, callback(ev), do_add)
         except Exception as err:
             print('Error on bind(%s): %s' % (ev, err))
         try:
             do_add = False
-            mb.bind_all(ev, callback(ev), do_add)
-            mb.bind(ev, callback(ev), do_add)
+            mb.bind_all(ev, callback(ev, verbose), do_add)
+            mb.bind(ev, callback(ev, verbose), do_add)
         except Exception as err:
             print('Error on mb.bind(%s): %s' % (ev, err))
 
@@ -174,3 +226,4 @@ if not False:
     bindall(top)
     top.pack()
     top.mainloop()
+    track_dump()

@@ -88,7 +88,7 @@ J4744oZzXUEDHQxwN7F5G7QRdXxPoPkAnHfu+eeghw665n1vIKhJBQUEADs=""")
 style = ttk.Style()
 
 style.element_create("RoundedFrame", "image", "frameBorder",
-    ("focus", "frameFocusBorder"), border=16, sticky="nsew")
+                     ("focus", "frameFocusBorder"), border=16, sticky="nsew")
 
 style.layout("RoundedFrame", [("RoundedFrame", {"sticky": "nsew"})])
 style.configure("TEntry", borderwidth=0)
