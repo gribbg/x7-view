@@ -77,14 +77,12 @@ def main():
     root = tk.Tk()
     raw = CURSORS_TCL_LANG
     # raw = CURSORS_WINDOWS
-    all_names = [names(v) for v in [CURSORS_WINDOWS, CURSORS_MACOS, CURSORS_UNIX, CURSORS_TCL_LANG]] #, CURSORS_TCL_TK_MAN]]
-    all_names = [names(v) for v in [CURSORS_TCL_TK_MAN]]
+    all_names = [names(v) for v in [CURSORS_WINDOWS, CURSORS_MACOS, CURSORS_UNIX, CURSORS_TCL_LANG, CURSORS_TCL_TK_MAN]]
     raw = list(sorted(set(n for a in all_names for n in a)))
-    # raw = list(sorted(set(n for n in names(v) for v in [CURSORS_WINDOWS, CURSORS_MACOS, CURSORS_UNIX, CURSORS_TCL_LANG])))
     cols = len(names(raw)) // 10
     good = []
-    raw.insert(0, r'@\temp\cursor98.cur')
-    raw.insert(0, r'@\temp\test_cursor.xbm')
+    # raw.insert(0, r'@\temp\cursor98.cur')
+    # raw.insert(0, r'@\temp\test_cursor.xbm')
     for n, name in enumerate(names(raw)):
         try:
             lbl = tk.Label(root, text=name, cursor=name, border=2, relief=tk.SOLID)
@@ -92,11 +90,14 @@ def main():
         except tk.TclError as err:
             print(name, ': ', err)
             lbl = tk.Label(root, text=name, border=2, relief=tk.GROOVE, fg='grey')
-        lbl.grid(row=n % cols, column=n // cols, ipadx=2, ipady=2, padx=6, pady=2, sticky='news')
+        lbl.grid(row=10+n % cols, column=n // cols, ipadx=2, ipady=2, padx=6, pady=2, sticky='news')
 
     print('platform:', sys.platform)
     print('windowingsystem:', root.tk.call('tk', 'windowingsystem'))
     print('cursors [%d]:' % len(good), ', '.join(good))
+    lbl = tk.Label(root, text='Platform: %s    Windowing System: %s    Cursors: %d of %d' %
+                              (sys.platform, root.tk.call('tk', 'windowingsystem'), len(good), len(names(raw))))
+    lbl.grid(row=0, column=0, columnspan=cols, pady=2, ipady=2, sticky='news')
 
     root.mainloop()
 
