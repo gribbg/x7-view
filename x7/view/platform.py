@@ -11,7 +11,8 @@ import dataclasses
 class PlatformConfig:
     ui_platform: str            # Unique name to be used for further platform specific tests
     context_button_id: int      # aka right-mouse-button
-    link_cursor: str            # hand-like cursor to use for links
+    cursor_link: str            # hand-like cursor to use for links
+    cursor_zoom: str            # magnifying glass for zoom-in
     window_body: str            # Default background for Entry fields
     frame_background: str       # Default background for empty Frame
 
@@ -20,7 +21,8 @@ if sys.platform == 'win32':
     PCFG = PlatformConfig(
         ui_platform='win32',
         context_button_id=3,
-        link_cursor='hand2',
+        cursor_link='hand2',
+        cursor_zoom='plus',
         window_body='cyan',
         frame_background='#f0f0f0',
     )
@@ -29,7 +31,8 @@ elif sys.platform == 'darwin':
     PCFG = PlatformConfig(
         ui_platform='darwin',
         context_button_id=2,
-        link_cursor='pointinghand',
+        cursor_link='pointinghand',
+        cursor_zoom='zoom-in',
         window_body='systemWindowBody',
         frame_background='#eeeeee',         # What about dark mode?
     )
@@ -37,7 +40,8 @@ elif sys.platform == 'linux' and 'microsoft' in str(os.uname()).lower():
     PCFG = PlatformConfig(
         ui_platform='linux_wsl',
         context_button_id=3,
-        link_cursor='hand2',
+        cursor_link='hand2',
+        cursor_zoom='plus',
         window_body='#ffffff',      # from tcltk/tk/library/ttk/clamTheme.tcl, $colors(-lightest)
         frame_background='#dcdad5',
     )

@@ -1,13 +1,14 @@
+from x7.geom.geom import Point, BBox
+from ..platform import PCFG
 from ..digi import DigitizeController
 from .common import ModeCommon
-from x7.geom.geom import Point, BBox
 
 
 class ModeZoom(ModeCommon):
     """Zoom mode: zoom to a box"""
 
     MODE_TAG = 'Zoom'
-    CURSOR = 'zoom-in'
+    CURSOR = PCFG.cursor_zoom
 
     def __init__(self, controller: DigitizeController):
         super().__init__(controller)
