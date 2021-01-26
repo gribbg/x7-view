@@ -242,6 +242,7 @@ class ModeSelectContextMenu:
 class ModeSelect(ModeCommon):
     """Selection mode: select & drag objects.  Right-click goes to main or selected object"""
     MODE_TAG = 'Select'
+    HELP = 'Select object by click, multiple by click and drag'
 
     def __init__(self, controller: DigitizeController):
         super().__init__(controller)

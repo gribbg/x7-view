@@ -20,6 +20,7 @@ class Mode(ABC):
 
     MODE_TAG = 'None'           # .value of indicators for this mode (buttons, ...)
     CURSOR = 'arrow'
+    HELP = 'displayed in status bar'
 
     @classmethod
     def all_subclasses(cls):

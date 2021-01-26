@@ -155,6 +155,7 @@ class ModeAddRectangle(ModeAddDragP1P2):
     """Mode for adding via a single drag operation"""
 
     SHAPE_NAME = 'Rect'
+    HELP = 'Add rectangle: click to start, drag to second corner, Shift for square'
 
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""
@@ -165,16 +166,18 @@ class ModeAddRoundedRectangle(ModeAddDragP1P2):
     """Mode for adding via a single drag operation"""
 
     SHAPE_NAME = 'RRect'
+    HELP = 'Add rounded rectangle: click to start, drag to second corner, Shift for square'
 
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""
-        return DigitizeRoundedRectangle(self.controller.view, ElemRectangleRounded('rectN', PenBrush('black'), mp, mp, 25))
+        return DigitizeRoundedRectangle(self.controller.view, ElemRectangleRounded('rectN', PenBrush('black'), mp, mp, 5))
 
 
 class ModeAddEllipse(ModeAddDragP1P2):
     """Add an ellipse via a single drag operation"""
 
     SHAPE_NAME = 'Ellipse'
+    HELP = 'Add ellipse: click to start, drag to set bounding box corner, Shift for circle'
 
     def drag_begin(self, mp) -> DigitizeShape:
         """Start a drag operation at model space point mp"""

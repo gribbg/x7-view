@@ -9,6 +9,7 @@ class ModeZoom(ModeCommon):
 
     MODE_TAG = 'Zoom'
     CURSOR = PCFG.cursor_zoom
+    HELP = 'Zoom: click and drag to zoom to box'
 
     def __init__(self, controller: DigitizeController):
         super().__init__(controller)

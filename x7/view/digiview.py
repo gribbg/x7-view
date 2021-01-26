@@ -525,6 +525,7 @@ class DigitizeView(DigiDraw):
         if self.mode.exit_ok():
             self.canvas.configure(cursor=mode.CURSOR)
             self.mode = mode
+            self.status_set(mode.HELP)
             return True
         else:
             print('Warning: mode change from %s to %s rejected' % (self.mode, mode))

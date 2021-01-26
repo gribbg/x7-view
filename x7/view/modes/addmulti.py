@@ -144,6 +144,7 @@ class ModeAddMultiClick(ModeAdd):
 
 class ModeAddCurve(ModeAddMultiClick):
     SHAPE_NAME = 'Curve'
+    HELP = 'Add curve: click for points, drag to set curvature, right-click to end'
 
     def multi_begin(self, mp: Point) -> DigitizeCurve:
         """Start a multi-click add at model space point mp"""
