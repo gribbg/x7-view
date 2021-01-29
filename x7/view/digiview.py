@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from abc import ABC
 
+# noinspection PyPackageRequirements
 from PIL import Image, ImageTk, ImageOps
 
 from .errors import DigitizeInternalError
@@ -26,14 +27,7 @@ ShapeOrShapes = Union[DigitizeShape, List[DigitizeShape]]
 def digi_shape_from_elem(elem: Elem, draw: DigiDraw = None):
     """Return a DigitizeShape based on an Elem"""
 
-    shape_map: Dict[type, callable] = {
-        ElemRectangleRounded: DigitizeRoundedRectangle,
-        ElemRectangle: DigitizeRectangle,
-        ElemEllipse: DigitizeEllipse,
-        ElemCurve: DigitizeCurve,
-        ElemWithHoles: DigitizeWithHoles,
-        Group: DigitizeGroup,
-    }
+    shape_map = DigitizeShape.shape_map()
 
     digi_class = shape_map.get(elem.__class__, None)
     if digi_class is None:

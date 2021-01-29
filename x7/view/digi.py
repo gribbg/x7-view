@@ -253,7 +253,8 @@ class DigitizeController(object):
         # pen = PenBrush('black')
         # TODO-Don't wrap in group if top-level is a single group
         elems = [shape.elem for shape in shapes or self.view.shapes]
-        top = Group(self.model.name, PenBrush('default'), elems=elems, fix_names=True)
+        name = self.model.name if self.model else 'default'
+        top = Group(name, PenBrush('default'), elems=elems, fix_names=True)
         return top
 
     # noinspection PyUnresolvedReferences
@@ -374,6 +375,7 @@ def screen_size() -> Tuple[int, int, int, int]:
 
 
 def test_digi():
+    # noinspection PyPackageRequirements
     from PIL import Image
     from x7.geom.drawing import DrawingContext
     from x7.geom.transform import Transform

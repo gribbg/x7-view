@@ -4,9 +4,12 @@
 import re
 import tkinter as tk
 from tkinter import ttk, simpledialog
+from typing import Generator
 
-from x7.geom.geom import Point
+from x7.geom.geom import Point, Vector
 from x7.geom.typing import *
+from x7.lib.iters import t_range
+
 from .digiview import DigitizeView
 from .platform import PCFG
 from .shapes import DigitizeShape
@@ -87,12 +90,36 @@ class Detail(object):
     def update(self):
         if not self.ro:
             cur_val = self.get_val()
-            cur_val_displayed = cur_val if isinstance(cur_val, str) else repr(cur_val)
             new_val = self.get()
             if self.VERBOSE:
+                cur_val_displayed = cur_val if isinstance(cur_val, str) else repr(cur_val)
                 msg = '[Same]' if cur_val == new_val else ('[was %s]' % cur_val_displayed)
                 print('update %s -> %s %s' % (self.addr_text, new_val, msg))
             self.set_val(new_val)
+
+    def animator(self, steps=20) -> Union[None, Generator]:
+        if not self.ro:
+            cur_val = self.get_val()
+            new_val = self.get()
+            if cur_val != new_val:
+                if isinstance(cur_val, (int, float)):
+                    def anim_func():
+                        for t in t_range(steps, t_start=cur_val, t_end=new_val):
+                            self.set_val(t)
+                            yield t
+                    return anim_func()
+                elif isinstance(cur_val, (Vector, Point)) and isinstance(new_val, (Vector, Point)):
+                    v = new_val - cur_val
+
+                    def anim_func():
+                        for t in t_range(steps):
+                            np = cur_val + t * v
+                            self.set_val(np)
+                            yield np
+                    return anim_func()
+                else:
+                    raise ValueError("Can't animate %r to %r" % (cur_val, new_val))
+        return None
 
 
 class DetailBool(Detail):
@@ -193,6 +220,8 @@ class DetailDialog(simpledialog.Dialog):
         w.pack(side=tk.LEFT, padx=5, pady=5)
         w = ttk.Button(box, text="Apply", command=self.apply_button)
         w.pack(side=tk.LEFT, padx=5, pady=5)
+        w = ttk.Button(box, text="Animate", command=self.animate_button)
+        w.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.bind("<Return>", self.ok)
         self.bind("<Escape>", self.cancel)
@@ -239,12 +268,41 @@ class DetailDialog(simpledialog.Dialog):
         self.undo_snap()
         self.undo_commit()
 
-    def apply_button(self, event=None):
+    def apply_button(self, _event=None):
         """Just apply, but don't commit"""
         for d in self.details:
             if d:
                 d.update()
         self.shape.update()
+
+    def animate_button(self, _event=None):
+        """Linear animation to new values"""
+        steps = 1000
+        animators = []
+        for d in self.details:
+            if d:
+                a = d.animator(steps=steps)
+                if a:
+                    animators.append(a)
+        if animators:
+            widths = [0] * len(animators)
+
+            def animate_update():
+                try:
+                    vals = [next(anim) for anim in animators]
+                    vals = [str(round(v, 2)) for v in vals]
+                    for idx, s in enumerate(vals):
+                        if len(s) > widths[idx]:
+                            widths[idx] = len(s)
+                    msg = ' '.join('%-*s' % (w, s) for w, s in zip(widths, vals))
+                    print(widths)
+                    self.dv.status_set(msg)
+                    self.shape.update()
+                    self.master.after(10, animate_update)
+                except StopIteration:
+                    self.dv.status_clear()
+                    # TODO-reset back to current values for this item (weird undo stack interaction)
+            animate_update()
 
     def cancel(self, event=None):
         self.undo_abort()
