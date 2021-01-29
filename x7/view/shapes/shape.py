@@ -3,6 +3,9 @@ import math
 from abc import *
 import tkinter as tk
 from abc import ABC
+from typing import Type
+
+from x7.lib.subclasses import all_subclasses
 
 from ..errors import DigitizeInternalError
 from ..undo import Command
@@ -78,6 +81,7 @@ class DigitizeShape(ABC, TkIdSupport):
             - Selected-Detail: bold(?) + full edit handles (control points, ...)
     """
     ALWAYS_CLOSED = True
+    ELEM_TYPE = None
     bbox_show = False
     bbox_penbrush = PenBrush('grey')    # dash=[2, 6]
 
@@ -88,6 +92,16 @@ class DigitizeShape(ABC, TkIdSupport):
         self.edit_handles = []
         # List of paths displayed by this object, including bbox at 0
         self.path_info: List[Tuple[int, bool, PenBrush]] = []
+
+    @classmethod
+    def shape_map(cls) -> Dict[Type[Elem], Type['DigitizeShape']]:
+        """Return mapping from Elem class to DigitizeShape class"""
+        shapes: Dict[Type[Elem], Type['DigitizeShape']] = dict()
+        for klass in all_subclasses(cls):
+            elem_type = getattr(klass, 'ELEM_TYPE', None)
+            if elem_type:
+                shapes[elem_type] = klass
+        return shapes
 
     def __str__(self):
         return '%s(%s)' % (self.__class__.__name__, self.elem.name)

@@ -9,6 +9,8 @@ from x7.geom.model import ElemRectangleRounded
 
 
 class DigitizeRoundedRectangle(DigitizeP1P2):
+    ELEM_TYPE = ElemRectangleRounded
+
     def __init__(self, dd: Optional[DigiDraw], rrect: ElemRectangleRounded):
         super().__init__(dd, rrect)
         self.elem = rrect       # type fix

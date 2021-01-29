@@ -9,6 +9,8 @@ __all__ = ['DigitizeWithHoles']
 
 
 class DigitizeWithHoles(DigitizeShape):
+    ELEM_TYPE = ElemWithHoles
+
     def __init__(self, dd: Optional[DigiDraw], holey: ElemWithHoles):
         super().__init__(dd, holey)
 

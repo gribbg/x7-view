@@ -28,6 +28,8 @@ class DigitizeP1P2(DigitizeShape):
 
 
 class DigitizeRectangle(DigitizeP1P2):
+    ELEM_TYPE = ElemRectangle
+
     def __init__(self, dd: Optional[DigiDraw], rect: ElemRectangle):
         super().__init__(dd, rect)
         self.elem = rect        # type fix

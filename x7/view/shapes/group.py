@@ -7,12 +7,14 @@ from .shape import *
 
 
 class DigitizeGroup(DigitizeShape):
+    ELEM_TYPE = Group
     bbox_show = True
     bbox_penbrush = PenBrush(('grey', 1))   # dash=[2, 6]
 
     def __init__(self, dd: Optional[DigiDraw], group: Group):
         # name, shapes: DigitizeShapes, mat: Optional[Transform] = None):
         super().__init__(dd, group)
+        self.elem = group       # type fix
 
     @property
     def group(self) -> Group:

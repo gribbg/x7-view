@@ -287,6 +287,7 @@ class EditHandleOffset(EditHandleDisplayOnly):
 
 class DigitizeCurve(DigitizeShape):
     ALWAYS_CLOSED = False
+    ELEM_TYPE = ElemCurve
 
     def __init__(self, dd: Optional[DigiDraw], curve: ElemCurve):
         super().__init__(dd, curve)
