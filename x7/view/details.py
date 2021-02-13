@@ -295,7 +295,6 @@ class DetailDialog(simpledialog.Dialog):
                         if len(s) > widths[idx]:
                             widths[idx] = len(s)
                     msg = ' '.join('%-*s' % (w, s) for w, s in zip(widths, vals))
-                    print(widths)
                     self.dv.status_set(msg)
                     self.shape.update()
                     self.master.after(10, animate_update)
